@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reprezentative</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C0C0C; --panel:#141414; --bone:#F2EFE8; --dust:#8B8B82;
+  --blush:#F2CFC8; --line:rgba(242,239,232,.22); --solid:rgba(242,239,232,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--bone);
+  font-family:"Space Mono",ui-monospace,Menlo,monospace;-webkit-font-smoothing:antialiased}
+.hand{font-family:"Architects Daughter","Comic Sans MS",cursive}
+.script{font-family:"Caveat",cursive}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--blush);outline-offset:3px}
+img{max-width:100%;display:block}
+.sheet{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,44px)}
+.stitch{border:1px dashed var(--line)}
+
+/* header */
+header{position:sticky;top:0;z-index:40;background:rgba(12,12,12,.94);
+  backdrop-filter:blur(6px);border-bottom:1px dashed var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:58px;gap:20px}
+.mark{font-size:13px;letter-spacing:.42em;text-transform:uppercase;white-space:nowrap}
+.bar nav{display:flex;gap:26px;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dust)}
+.bar nav a:hover,.bar nav a.on{color:var(--bone)}
+.bagbtn{background:none;border:0;color:var(--bone);cursor:pointer;
+  font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;padding:6px 0;white-space:nowrap}
+.bagbtn b{font-weight:400;color:var(--blush)}
+@media(max-width:760px){.bar nav{display:none}}
+
+/* generic bits */
+.section-label{display:flex;align-items:baseline;gap:16px;font-size:10px;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--dust);padding:0 0 22px}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line)}
+.crumb{display:flex;gap:10px;align-items:center;padding:26px 0 20px;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust)}
+.crumb a:hover{color:var(--bone)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;
+  background:var(--bone);color:var(--ink);border:0;padding:16px 30px;
+  font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;transition:background .25s ease}
+.btn:hover{background:var(--blush)}
+.btn:disabled{background:#3A3A36;color:#77746D;cursor:not-allowed}
+.btn.ghost{background:none;color:var(--bone);border:1px solid var(--line)}
+.btn.ghost:hover{background:none;border-color:var(--bone)}
+.btn.wide{width:100%}
+.sym{width:40px;height:40px;color:var(--bone)}
+
+/* home hero */
+.hero{padding:clamp(56px,11vw,132px) 0 clamp(48px,8vw,96px)}
+.swatch{padding:clamp(38px,7vw,86px) clamp(20px,5vw,64px);text-align:center;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.014) 0 2px,transparent 2px 4px),var(--panel)}
+.wordmark{margin:0;font-size:clamp(28px,7.6vw,86px);line-height:1;letter-spacing:.16em;text-indent:.16em}
+.symbols{display:flex;justify-content:center;align-items:center;gap:clamp(14px,3.4vw,38px);
+  margin:clamp(24px,4vw,44px) 0;flex-wrap:wrap}
+.symbols svg{width:clamp(34px,6vw,64px);height:auto;color:var(--bone)}
+.est{font-size:clamp(24px,4.4vw,48px);letter-spacing:.06em}
+.rosette{margin-top:18px}.rosette svg{width:clamp(24px,3.4vw,36px)}
+.tagline{margin:clamp(30px,5vw,52px) auto 0;max-width:430px;font-size:11px;line-height:2;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dust)}
+
+/* care rows */
+.care{padding:clamp(60px,9vw,110px) 0}
+.care-row{display:grid;grid-template-columns:78px 1fr 200px;align-items:center;
+  gap:clamp(16px,4vw,40px);padding:26px 0;border-bottom:1px dashed var(--line);transition:padding-left .35s ease}
+.care-row:first-of-type{border-top:1px dashed var(--line)}
+.care-row:hover{padding-left:14px}
+.care-row .sym{width:44px;height:44px}
+.care-say{font-size:clamp(17px,2.5vw,27px);line-height:1.35;margin:0}
+.care-mean{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust);text-align:right}
+@media(max-width:760px){.care-row{grid-template-columns:52px 1fr;gap:18px}
+  .care-row .sym{width:34px;height:34px}.care-mean{grid-column:2;text-align:left}}
+
+/* product grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:1px;background:var(--line)}
+.item{background:var(--ink);padding:26px 22px 24px;display:flex;flex-direction:column;gap:14px;
+  cursor:pointer;border:0;text-align:left;color:inherit;font-family:inherit;width:100%}
+.frame{aspect-ratio:4/5;display:grid;place-items:center;background:var(--panel);
+  padding:6% 8%;transition:background .4s ease}
+.item:hover .frame{background:#1C1C1C}
+.frame img{width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55));
+  transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.item:hover .frame img{transform:scale(1.035)}
+.meta{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.name{font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.price{font-size:11px;color:var(--dust)}
+.colorway{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--dust)}
+.soldout{color:var(--blush)}
+
+/* PDP */
+.pdp{display:grid;grid-template-columns:1.08fr .92fr;gap:clamp(24px,4vw,56px);padding-bottom:clamp(50px,8vw,90px)}
+.gallery{display:flex;flex-direction:column;gap:12px}
+.main-shot{background:var(--panel);padding:7% 9%;display:grid;place-items:center;aspect-ratio:4/5}
+.main-shot img{width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 22px 38px rgba(0,0,0,.6))}
+.thumbs{display:flex;gap:10px}
+.thumb{width:74px;aspect-ratio:1;background:var(--panel);padding:6px;border:1px solid transparent;
+  cursor:pointer;display:grid;place-items:center}
+.thumb[aria-pressed="true"]{border-color:var(--bone)}
+.thumb img{width:100%;height:100%;object-fit:contain}
+.pdp h1{margin:0 0 6px;font-size:clamp(24px,3.6vw,40px);letter-spacing:.06em;line-height:1.15}
+.pdp .sub{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dust)}
+.pdp .cost{font-size:20px;margin:20px 0 0}
+.pdp .blurb{font-size:13px;line-height:2;color:var(--dust);margin:20px 0 0;max-width:44ch}
+.pick{margin-top:30px}
+.pick .lab{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--dust);margin-bottom:12px}
+.sizes{display:flex;gap:8px;flex-wrap:wrap}
+.sz{min-width:56px;padding:13px 8px;background:none;border:1px solid var(--line);color:var(--bone);
+  cursor:pointer;font-size:11px;letter-spacing:.14em;transition:border-color .2s,background .2s}
+.sz:hover:not(:disabled){border-color:var(--bone)}
+.sz[aria-pressed="true"]{background:var(--bone);color:var(--ink);border-color:var(--bone)}
+.sz:disabled{color:#4E4C47;border-style:dashed;cursor:not-allowed;text-decoration:line-through}
+.qty{display:flex;align-items:center;border:1px solid var(--line);width:fit-content;margin-top:22px}
+.qty button{background:none;border:0;color:var(--bone);cursor:pointer;padding:12px 16px;font-size:14px}
+.qty button:hover{color:var(--blush)}
+.qty span{min-width:44px;text-align:center;font-size:12px}
+.acc{margin-top:34px;border-top:1px dashed var(--line)}
+.acc details{border-bottom:1px dashed var(--line)}
+.acc summary{padding:16px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;
+  align-items:center;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:"+";color:var(--dust)}
+.acc details[open] summary::after{content:"\2013"}
+.acc .body{padding:0 0 18px;font-size:12.5px;line-height:2;color:var(--dust)}
+.acc .body ul{margin:0;padding-left:18px}
+.acc .body li{margin-bottom:6px}
+@media(max-width:880px){.pdp{grid-template-columns:1fr}}
+
+/* cart */
+.cart-wrap{padding-bottom:clamp(50px,8vw,90px)}
+.cart-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:clamp(24px,4vw,50px);align-items:start}
+.li{display:grid;grid-template-columns:104px 1fr auto;gap:20px;padding:22px 0;
+  border-bottom:1px dashed var(--line);align-items:start}
+.li:first-child{border-top:1px dashed var(--line)}
+.li .pic{background:var(--panel);padding:8%;display:grid;place-items:center;aspect-ratio:4/5}
+.li .pic img{width:100%;height:auto;object-fit:contain}
+.li .nm{font-size:12px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px}
+.li .attrs{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dust);margin:0 0 14px}
+.li .rm{background:none;border:0;color:var(--dust);cursor:pointer;padding:0;
+  font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.li .rm:hover{color:var(--blush)}
+.li .amt{text-align:right;font-size:13px;white-space:nowrap}
+.summary{border:1px dashed var(--line);padding:26px 24px;position:sticky;top:80px}
+.summary h3{margin:0 0 20px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--dust)}
+.sline{display:flex;justify-content:space-between;gap:14px;padding:9px 0;font-size:12px}
+.sline.total{border-top:1px dashed var(--line);margin-top:14px;padding-top:16px;font-size:15px}
+.sline .muted{color:var(--dust)}
+.summary .note{margin:18px 0 22px;font-size:9.5px;letter-spacing:.16em;line-height:1.9;
+  text-transform:uppercase;color:var(--dust)}
+.empty{text-align:center;padding:clamp(60px,10vw,120px) 20px;border:1px dashed var(--line)}
+.empty .sym{margin:0 auto 22px;width:54px;height:54px;color:var(--dust)}
+.empty p{margin:0 0 28px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust)}
+@media(max-width:860px){.cart-grid{grid-template-columns:1fr}.summary{position:static}}
+
+/* checkout */
+.co-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(24px,4vw,50px);
+  align-items:start;padding-bottom:clamp(50px,8vw,90px)}
+fieldset{border:0;padding:0;margin:0 0 34px}
+legend{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--dust);
+  padding:0 0 18px;width:100%;border-bottom:1px dashed var(--line);margin-bottom:20px}
+.fields{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.f{display:flex;flex-direction:column;gap:8px}
+.f.full{grid-column:1/-1}
+.f label{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dust)}
+.f input,.f select{background:none;border:0;border-bottom:1px solid var(--line);color:var(--bone);
+  padding:11px 2px;font-family:inherit;font-size:13px}
+.f input:focus,.f select:focus{border-color:var(--bone);outline:none}
+.f input::placeholder{color:#4E4C47}
+.f select option{background:var(--panel);color:var(--bone)}
+.f .err{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--blush);display:none}
+.f.bad input,.f.bad select{border-color:var(--blush)}
+.f.bad .err{display:block}
+.mini{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)}
+.mini .pic{width:56px;aspect-ratio:4/5;background:var(--panel);padding:5px;display:grid;place-items:center;flex:none}
+.mini .pic img{width:100%;height:100%;object-fit:contain}
+.mini .t{flex:1;min-width:0}
+.mini .t b{display:block;font-weight:400;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.mini .t span{font-size:10px;color:var(--dust);letter-spacing:.12em}
+.mini .a{font-size:12px;white-space:nowrap}
+@media(max-width:860px){.co-grid{grid-template-columns:1fr}.fields{grid-template-columns:1fr}}
+
+/* confirmation */
+.done{text-align:center;padding:clamp(50px,8vw,100px) clamp(20px,5vw,40px);border:1px dashed var(--line);
+  margin-bottom:clamp(40px,7vw,80px)}
+.done .rosette svg{width:44px;color:var(--blush)}
+.done h1{margin:22px 0 10px;font-size:clamp(26px,5vw,52px);letter-spacing:.1em}
+.done .oid{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--dust)}
+.done .card{max-width:460px;margin:38px auto 0;border:1px dashed var(--line);padding:26px 20px}
+.done .card .k{font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--dust);margin-bottom:18px}
+.done .card .row{display:flex;justify-content:center;gap:18px;flex-wrap:wrap}
+.done .card .sym{width:30px;height:30px}
+.done .actions{margin-top:36px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* comp + enlist + footer */
+.comp{border-top:1px dashed var(--line);padding:clamp(56px,8vw,96px) 0}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:40px}
+.comp dt{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--dust);margin-bottom:10px}
+.comp dd{margin:0;font-size:15px;line-height:1.6}
+.enlist{text-align:center;padding:clamp(58px,9vw,110px) clamp(20px,5vw,40px);
+  border:1px dashed var(--line);margin-bottom:clamp(50px,8vw,90px)}
+.enlist h2{margin:0 0 12px;font-size:clamp(24px,4.4vw,44px);letter-spacing:.12em}
+.enlist p{margin:0 auto 30px;max-width:400px;font-size:11px;letter-spacing:.14em;line-height:2;
+  text-transform:uppercase;color:var(--dust)}
+.field{display:flex;max-width:420px;margin:0 auto;border-bottom:1px solid var(--bone)}
+.field input{flex:1;background:none;border:0;color:var(--bone);padding:12px 4px;
+  font-family:inherit;font-size:12px;letter-spacing:.12em}
+.field input::placeholder{color:var(--dust)}
+.field button{background:none;border:0;color:var(--bone);cursor:pointer;font-size:10px;
+  letter-spacing:.24em;text-transform:uppercase;padding:12px 4px 12px 18px}
+.field button:hover{color:var(--blush)}
+footer{border-top:1px dashed var(--line);padding:34px 0 60px}
+.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:10px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--dust)}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,140%);z-index:60;
+  background:var(--bone);color:var(--ink);padding:14px 24px;font-size:10.5px;
+  letter-spacing:.2em;text-transform:uppercase;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.toast.up{transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* sticky footer — short pages were leaving the footer floating mid-screen */
+body{min-height:100vh;display:flex;flex-direction:column}
+#view{flex:1 0 auto}
+footer{flex:none}
+
+/* ---- make page ---- */
+.mk-lede{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,5vw,60px);
+  align-items:start;padding:clamp(20px,3vw,40px) 0 clamp(40px,6vw,72px)}
+.mk-lede h1{margin:0;font-size:clamp(28px,5vw,58px);line-height:1.08;letter-spacing:.04em}
+.mk-lede p{margin:0 0 20px;font-size:13.5px;line-height:2.1;color:var(--dust);max-width:46ch}
+.mk-lede p:last-child{margin-bottom:0}
+@media(max-width:800px){.mk-lede{grid-template-columns:1fr}}
+
+.mk-block{padding:clamp(40px,6vw,80px) 0}
+.mk-draw{display:grid;grid-template-columns:1fr 300px;border:1px dashed var(--line);background:var(--panel)}
+.mk-canvas{padding:clamp(18px,3vw,36px);display:grid;place-items:center;border-right:1px dashed var(--line)}
+.mk-canvas svg{width:100%;max-width:520px;height:auto}
+.mk-notes{padding:clamp(22px,3vw,32px);display:flex;flex-direction:column;justify-content:center}
+.mk-notes .k{font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--blush);margin-bottom:14px}
+.mk-notes .spec{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px 0;
+  border-bottom:1px dotted var(--line);font-size:11.5px}
+.mk-notes .spec span:first-child{color:var(--dust);letter-spacing:.1em}
+@media(max-width:900px){.mk-draw{grid-template-columns:1fr}
+  .mk-canvas{border-right:0;border-bottom:1px dashed var(--line)}}
+
+.mk-table{border:1px dashed var(--line);overflow-x:auto;background:var(--panel)}
+.mk-table table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:520px}
+.mk-table caption{text-align:left;padding:16px 20px;font-size:9.5px;letter-spacing:.26em;
+  text-transform:uppercase;color:var(--dust);border-bottom:1px dashed var(--line)}
+.mk-table th,.mk-table td{padding:12px 20px;text-align:right;border-bottom:1px dashed var(--line)}
+.mk-table th:first-child,.mk-table td:first-child{text-align:left;color:var(--dust);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.mk-table thead th{font-weight:400;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust)}
+.mk-table tbody tr:last-child td{border-bottom:0}
+.mk-table tbody tr:hover{background:rgba(242,207,200,.07)}
+
+.mk-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--line)}
+.mk-step{background:var(--ink);padding:28px 24px}
+.mk-step .n{font-size:10px;letter-spacing:.28em;color:var(--blush);margin-bottom:16px}
+.mk-step h3{margin:0 0 12px;font-size:14px;letter-spacing:.1em}
+.mk-step p{margin:0;font-size:12.5px;line-height:1.95;color:var(--dust)}
+
+.mk-quote{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);
+  padding:clamp(44px,7vw,88px) 0;text-align:center}
+.mk-quote p{margin:0 auto;max-width:620px;font-size:clamp(19px,3vw,32px);line-height:1.45}
+.mk-quote .attr{margin-top:24px;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--dust)}
+
+.mk-cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:clamp(40px,6vw,72px) 0}
+.mk-cta p{margin:0;flex:1;min-width:240px;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dust);line-height:1.9}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="sheet bar">
+    <a class="mark hand" href="#/">Reprezentative</a>
+    <nav id="nav">
+      <a href="#/shop">Shop</a>
+      <a href="#/care">Care</a>
+      <a href="#/make">Make</a>
+    </nav>
+    <button class="bagbtn" id="bagbtn" type="button">Bag (<b id="bagcount">0</b>)</button>
+  </div>
+</header>
+
+<main id="view" class="sheet"></main>
+
+<footer>
+  <div class="sheet foot">
+    <span>Reprezentative &copy; 1982</span>
+    <span>Stockists / Returns / Contact</span>
+    <span>Wash cold. Hang dry.</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- care symbols ---------- */
+var SYM = {
+  bleach:'<path d="M20 5 L34 33 H6 Z"/><path d="M9 12 L31 31 M31 12 L9 31"/>',
+  wash:'<path d="M5 12 H35 L30 30 H10 Z"/><circle cx="20" cy="20" r="2.4" fill="currentColor" stroke="none"/><path d="M9 35 H31"/>',
+  tumble:'<rect x="6" y="7" width="28" height="28"/><path d="M7 8 L33 34 M33 8 L7 34"/>',
+  iron:'<path d="M4 29 H36 V25 C36 16 30 12 22 12 H13 L4 21 Z"/>',
+  dryclean:'<circle cx="20" cy="20" r="14"/><path d="M10 10 L30 30 M30 10 L10 30"/>'
+};
+function sym(k, cls){
+  return '<svg class="'+(cls||'sym')+'" viewBox="0 0 40 40" fill="none" stroke="currentColor" '+
+         'stroke-width="2.3" stroke-linejoin="round" aria-hidden="true">'+SYM[k]+'</svg>';
+}
+var ROSETTE = '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">'+
+  '<polygon points="20.0,2.0 23.5,5.9 28.4,4.1 29.6,9.1 34.8,9.8 33.6,14.9 37.9,17.8 34.4,21.7 36.8,26.4 31.9,28.2 31.9,33.5 26.7,32.8 24.3,37.5 20.0,34.5 15.7,37.5 13.3,32.8 8.1,33.5 8.1,28.2 3.2,26.4 5.6,21.7 2.1,17.8 6.4,14.9 5.2,9.8 10.4,9.1 11.6,4.1 16.5,5.9"/>'+
+  '<path d="M14 20.4 l4.2 4.2 8-8.6" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
+var CARE_LINES = [
+  ['bleach','Nothing here needs stripping out.','Do not bleach'],
+  ['wash','Wear it hard. Wash it easy.','Cold, gentle cycle'],
+  ['tumble','Heat is a shortcut. Take the long way.','Do not tumble dry'],
+  ['iron','Press it when the day calls for it.','Iron low, avoid print'],
+  ['dryclean','This was never meant to be precious.','Do not dry clean']
+];
+
+/* ---------- catalogue ---------- */
+var PRODUCTS = __PRODUCTS__;
+var SIZES = ['S','M','L','XL','XXL'];
+function find(id){ for(var i=0;i<PRODUCTS.length;i++) if(PRODUCTS[i].id===id) return PRODUCTS[i]; return null; }
+function money(n){ return '$'+n.toFixed(2); }
+
+/* ---------- state (in memory; resets on refresh) ---------- */
+var cart = [];
+var order = null;
+function bagCount(){ var n=0; for(var i=0;i<cart.length;i++) n+=cart[i].qty; return n; }
+function subtotal(){ var s=0; for(var i=0;i<cart.length;i++) s+=cart[i].qty*cart[i].price; return s; }
+function shipCost(){ if(!cart.length) return 0; return subtotal()>=150?0:8; }
+function syncBag(){ document.getElementById('bagcount').textContent = bagCount(); }
+function addToCart(p, size, qty){
+  for(var i=0;i<cart.length;i++){
+    if(cart[i].id===p.id && cart[i].size===size){ cart[i].qty+=qty; syncBag(); return; }
+  }
+  cart.push({id:p.id,name:p.name,colorway:p.colorway,price:p.price,img:p.img,size:size,qty:qty});
+  syncBag();
+}
+
+var toastTimer;
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('up');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ el.classList.remove('up'); },2400);
+}
+
+/* ---------- shared fragments ---------- */
+function productCard(p){
+  var out = p.sizes.S+p.sizes.M+p.sizes.L+p.sizes.XL+p.sizes.XXL === 0;
+  return '<button class="item" data-go="#/product/'+p.id+'">'+
+    '<span class="frame"><img src="'+p.img+'" alt="'+p.name+'" loading="lazy"></span>'+
+    '<span class="meta"><span class="name">'+p.name+'</span><span class="price">'+money(p.price)+'</span></span>'+
+    '<span class="colorway'+(out?' soldout':'')+'">'+(out?'Sold out':p.colorway)+'</span>'+
+  '</button>';
+}
+function grid(){
+  var h='<div class="grid">';
+  for(var i=0;i<PRODUCTS.length;i++) h+=productCard(PRODUCTS[i]);
+  return h+'</div>';
+}
+function careRows(){
+  var h='';
+  for(var i=0;i<CARE_LINES.length;i++){
+    var c=CARE_LINES[i];
+    h+='<div class="care-row">'+sym(c[0])+'<p class="care-say">'+c[1]+'</p>'+
+       '<span class="care-mean">'+c[2]+'</span></div>';
+  }
+  return h;
+}
+function enlist(){
+  return '<section class="enlist"><h2 class="hand">NEXT RUN</h2>'+
+    '<p>Two hundred pieces. One email before they go up.</p>'+
+    '<div class="field"><input type="email" placeholder="email address" aria-label="Email address">'+
+    '<button type="button" data-act="signup">Join</button></div></section>';
+}
+function summaryBox(showBtn){
+  var sub=subtotal(), ship=shipCost();
+  return '<aside class="summary"><h3>Order summary</h3>'+
+    '<div class="sline"><span class="muted">Subtotal</span><span>'+money(sub)+'</span></div>'+
+    '<div class="sline"><span class="muted">Shipping</span><span>'+(ship===0?'Free':money(ship))+'</span></div>'+
+    '<div class="sline total"><span>Total</span><span>'+money(sub+ship)+'</span></div>'+
+    '<p class="note">'+(sub>=150||sub===0?'Free shipping applied':'Free shipping over $150')+
+    ' &middot; Ships in 48 hours &middot; 30 day returns</p>'+
+    (showBtn?'<button class="btn wide" data-go="#/checkout">Checkout</button>':'')+
+    '</aside>';
+}
+
+/* ---------- pages ---------- */
+function pageHome(){
+  return '<section class="hero"><div class="swatch stitch">'+
+      '<h1 class="wordmark hand">REPREZENTATIVE</h1>'+
+      '<div class="symbols">'+sym('bleach','')+sym('wash','')+sym('tumble','')+sym('iron','')+sym('dryclean','')+'</div>'+
+      '<div class="est script">est 1982</div>'+
+      '<div class="rosette">'+ROSETTE+'</div>'+
+      '<p class="tagline">Heavyweight fleece. Printed one color. Cut to be worn until the print cracks.</p>'+
+    '</div></section>'+
+    '<section class="care" id="care"><div class="section-label">Care instructions</div>'+careRows()+'</section>'+
+    '<section style="padding-bottom:clamp(60px,9vw,110px)"><div class="section-label">In stock</div>'+grid()+'</section>'+
+    pageMakeInner()+enlist();
+}
+function pageMakeInner(){
+  return '<section class="comp" id="make"><div class="section-label">Composition</div><dl class="comp-grid">'+
+    '<div><dt>Fabric</dt><dd>80% cotton / 20% recycled polyester, 400 gsm brushed fleece</dd></div>'+
+    '<div><dt>Fit</dt><dd>Boxy through the body, dropped shoulder, ribbed cuff and hem</dd></div>'+
+    '<div><dt>Print</dt><dd>Water-based screen print, cured to crack slowly</dd></div>'+
+    '<div><dt>Made</dt><dd>Cut and sewn in runs of 200. When a run is gone, it is gone</dd></div>'+
+    '</dl></section>';
+}
+function pageShop(){
+  return '<div class="crumb"><a href="#/">Home</a><span>/</span><span>Shop</span></div>'+
+    '<section style="padding-bottom:clamp(60px,9vw,110px)">'+
+    '<div class="section-label">All goods &mdash; four pieces</div>'+grid()+'</section>'+enlist();
+}
+function pageCare(){
+  return '<div class="crumb"><a href="#/">Home</a><span>/</span><span>Care</span></div>'+
+    '<section class="care">'+careRows()+'</section>';
+}
+function techFlat(){
+  return '<svg viewBox="0 0 560 520" aria-label="Dimensioned flat drawing of the hooded pullover">'+
+    '<g stroke="var(--blush)" stroke-width="1" fill="none">'+
+      '<path d="M128 42 H272"/><path d="M128 36 V48 M272 36 V48"/>'+
+      '<path d="M62 118 V462"/><path d="M56 118 H68 M56 462 H68"/>'+
+      '<path d="M356 470 H430"/><path d="M356 464 V476 M430 464 V476"/>'+
+    '</g>'+
+    '<g fill="var(--blush)" font-family="Space Mono, monospace" font-size="10" letter-spacing="1">'+
+      '<text x="200" y="30" text-anchor="middle">CHEST 58 CM</text>'+
+      '<text x="48" y="296" text-anchor="middle" transform="rotate(-90 48 296)">BODY 71 CM</text>'+
+      '<text x="393" y="494" text-anchor="middle">CUFF 9 CM</text>'+
+    '</g>'+
+    '<g transform="translate(80 44)" fill="none" stroke="var(--bone)" stroke-width="2.1" '+
+      'stroke-linejoin="round" stroke-linecap="round">'+
+      '<path d="M148 60 C150 24 168 6 200 6 C232 6 250 24 252 60 C240 78 222 88 200 88 C178 88 160 78 148 60 Z"/>'+
+      '<path d="M200 34 C176 34 154 43 148 60 L118 110 L52 144 C42 149 37 160 40 171 L72 300 '+
+        'C75 312 87 318 98 314 L128 302 L128 452 L272 452 L272 302 L302 314 C313 318 325 312 328 300 '+
+        'L360 171 C363 160 358 149 348 144 L282 110 L252 60 C246 43 224 34 200 34 Z"/>'+
+      '<path d="M158 62 C170 84 184 94 200 94 C216 94 230 84 242 62"/>'+
+      '<path d="M186 90 L184 128 M214 90 L216 128"/>'+
+      '<circle cx="184" cy="128" r="3"/><circle cx="216" cy="128" r="3"/>'+
+      '<path d="M124 318 L276 318 L276 386 L124 386 Z"/>'+
+      '<path d="M124 318 L150 342 M276 318 L250 342"/>'+
+      '<path d="M128 424 H272" stroke-dasharray="5 4"/>'+
+      '<path d="M84 306 L96 250" stroke-dasharray="5 4"/><path d="M316 306 L304 250" stroke-dasharray="5 4"/>'+
+      '<rect x="128" y="146" width="144" height="86" stroke="var(--blush)" stroke-width="1" stroke-dasharray="4 4"/>'+
+      '<text x="200" y="168" text-anchor="middle" fill="var(--bone)" stroke="none" '+
+        'font-family="Architects Daughter, cursive" font-size="15" letter-spacing="1.8">REPREZENTATIVE</text>'+
+      '<g transform="translate(133 178) scale(.53)" stroke-width="3.4">'+
+        '<g><path d="M20 5 L34 33 H6 Z"/><path d="M9 12 L31 31 M31 12 L9 31"/></g>'+
+        '<g transform="translate(46 0)"><path d="M5 12 H35 L30 30 H10 Z"/><path d="M9 35 H31"/></g>'+
+        '<g transform="translate(92 0)"><rect x="6" y="7" width="28" height="28"/><path d="M7 8 L33 34 M33 8 L7 34"/></g>'+
+        '<g transform="translate(138 0)"><path d="M4 29 H36 V25 C36 16 30 12 22 12 H13 L4 21 Z"/></g>'+
+        '<g transform="translate(184 0)"><circle cx="20" cy="20" r="14"/><path d="M10 10 L30 30 M30 10 L10 30"/></g>'+
+      '</g>'+
+      '<text x="200" y="226" text-anchor="middle" fill="var(--bone)" stroke="none" '+
+        'font-family="Caveat, cursive" font-size="17">est 1982</text>'+
+      '<g stroke="var(--blush)" stroke-width="1">'+
+        '<path d="M272 190 L336 190"/><path d="M276 352 L336 352"/><path d="M252 60 L336 44"/></g>'+
+      '<g fill="var(--blush)" stroke="none" font-family="Space Mono, monospace" font-size="9.5" letter-spacing="1">'+
+        '<text x="342" y="193">PRINT AREA 18 x 11 CM</text>'+
+        '<text x="342" y="355">POCKET, TWO ENTRY</text>'+
+        '<text x="342" y="47">HOOD, TWO PANEL</text></g>'+
+    '</g></svg>';
+}
+
+var MEASURE = [
+  ['Chest',54,58,62,66,70],
+  ['Body length',67,71,74,77,80],
+  ['Sleeve',58,60,62,64,66],
+  ['Shoulder',50,53,56,59,62],
+  ['Cuff opening',9,9,10,10,11]
+];
+var STEPS = [
+  ['01','Knit and brush','The fleece is knitted at 400 gsm and brushed on the inside face only, so the outside stays flat enough to hold a clean print edge.'],
+  ['02','Cut in one lay','Every size in a run is cut from a single lay of cloth. It costs more than cutting to order and it is the reason a run closes at 200.'],
+  ['03','Print, then cure','One pass of water-based ink, cured at low heat. It sits in the fibre rather than on top of it, so it fades with the fleece instead of peeling off it.'],
+  ['04','Sew and box','Sewn, checked, folded and boxed before the run opens. Nothing is made after the fact, which is why orders leave inside 48 hours.']
+];
+
+function pageMake(){
+  var rows='';
+  for(var i=0;i<MEASURE.length;i++){
+    var r=MEASURE[i];
+    rows+='<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td><td>'+r[5]+'</td></tr>';
+  }
+  var steps='';
+  for(var j=0;j<STEPS.length;j++){
+    var s=STEPS[j];
+    steps+='<div class="mk-step"><div class="n">'+s[0]+'</div><h3>'+s[1]+'</h3><p>'+s[2]+'</p></div>';
+  }
+  return '<div class="crumb"><a href="#/">Home</a><span>/</span><span>Make</span></div>'+
+
+  '<section class="mk-lede">'+
+    '<h1 class="hand">ONE GARMENT,<br>MADE FOUR WAYS</h1>'+
+    '<div>'+
+      '<p>Every piece in the run is the same body. The same pattern, the same fleece, the same '+
+      'two-panel hood and the same two-entry pocket. Only the print on the chest changes.</p>'+
+      '<p>That is deliberate. If the garment underneath is settled, the thing you are choosing '+
+      'between is the idea on the front of it, which is the part worth choosing between.</p>'+
+    '</div>'+
+  '</section>'+
+
+  pageMakeInner()+
+
+  '<section class="mk-block"><div class="section-label">The pattern</div>'+
+    '<div class="mk-draw">'+
+      '<div class="mk-canvas">'+techFlat()+'</div>'+
+      '<div class="mk-notes">'+
+        '<div class="k">Drawing RPZ-1001</div>'+
+        '<div class="spec"><span>Scale</span><span>1:8, front flat</span></div>'+
+        '<div class="spec"><span>Hood</span><span>Two panel, lined</span></div>'+
+        '<div class="spec"><span>Shoulder</span><span>Dropped 4 cm</span></div>'+
+        '<div class="spec"><span>Pocket</span><span>Two entry, bar tacked</span></div>'+
+        '<div class="spec"><span>Rib</span><span>2x1, cuff and hem</span></div>'+
+        '<div class="spec"><span>Print area</span><span>18 x 11 cm</span></div>'+
+      '</div>'+
+    '</div>'+
+  '</section>'+
+
+  '<section class="mk-block" style="padding-top:0"><div class="section-label">Measurements</div>'+
+    '<div class="mk-table"><table>'+
+      '<caption>Flat, in centimetres &mdash; tolerance &plusmn;1.5</caption>'+
+      '<thead><tr><th>Point of measure</th><th>S</th><th>M</th><th>L</th><th>XL</th><th>XXL</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+    '</table></div>'+
+  '</section>'+
+
+  '<section class="mk-block" style="padding-top:0"><div class="section-label">How it is made</div>'+
+    '<div class="mk-steps">'+steps+'</div>'+
+  '</section>'+
+
+  '<section class="mk-quote"><p>The care label is the only part of a garment that assumes '+
+    'you intend to keep it. That seemed like the part worth putting on the outside.</p>'+
+    '<div class="attr">On the first run, 1982</div></section>'+
+
+  '<section class="mk-block"><div class="section-label">Keep it this way</div>'+
+    '<div style="display:flex;gap:clamp(18px,4vw,44px);flex-wrap:wrap;align-items:center;justify-content:center;padding:20px 0">'+
+      sym('bleach')+sym('wash')+sym('tumble')+sym('iron')+sym('dryclean')+
+    '</div></section>'+
+
+  '<section class="mk-cta">'+
+    '<p>Four pieces in this run. Two hundred of each.</p>'+
+    '<a class="btn" href="#/shop">See the run</a>'+
+    '<a class="btn ghost" href="#/care">Read the care</a>'+
+  '</section>'+
+
+  enlist();
+}
+
+function pageProduct(id){
+  var p=find(id);
+  if(!p) return '<div class="empty" style="margin:60px 0">'+sym('dryclean')+
+    '<p>That piece is not in the archive</p><a class="btn" href="#/shop">Back to shop</a></div>';
+  var szh='';
+  var _skeys=Object.keys(p.sizes||{});
+  for(var i=0;i<_skeys.length;i++){
+    var s=_skeys[i], left=p.sizes[s];
+    szh+='<button class="sz" data-size="'+s+'" aria-pressed="false"'+(left?'':' disabled')+'>'+s+'</button>';
+  }
+  return '<div class="crumb"><a href="#/">Home</a><span>/</span><a href="#/shop">Shop</a><span>/</span><span>'+p.name+'</span></div>'+
+  '<section class="pdp">'+
+    '<div class="gallery">'+
+      '<div class="main-shot"><img id="mainshot" src="'+p.img+'" alt="'+p.name+'"></div>'+
+      '<div class="thumbs">'+
+        '<button class="thumb" data-shot="'+p.img+'" aria-pressed="true"><img src="'+p.img+'" alt="Full garment"></button>'+
+        '<button class="thumb" data-shot="'+p.detail+'" aria-pressed="false"><img src="'+p.detail+'" alt="Print detail"></button>'+
+      '</div>'+
+    '</div>'+
+    '<div>'+
+      '<h1>'+p.name+'</h1>'+
+      '<div class="sub">'+p.colorway+' &middot; Run of 200</div>'+
+      '<div class="cost">'+money(p.price)+'</div>'+
+      '<p class="blurb">'+p.blurb+'</p>'+
+      '<div class="pick"><div class="lab"><span>Size</span><span id="stockmsg">Select a size</span></div>'+
+      '<div class="sizes" id="sizes">'+szh+'</div></div>'+
+      '<div class="qty"><button type="button" data-q="-1" aria-label="Decrease quantity">&minus;</button>'+
+        '<span id="qty">1</span>'+
+        '<button type="button" data-q="1" aria-label="Increase quantity">+</button></div>'+
+      '<button class="btn wide" id="addbtn" style="margin-top:22px" disabled>Select a size</button>'+
+      '<div class="acc">'+
+        '<details open><summary>Description</summary><div class="body">'+p.story+'</div></details>'+
+        '<details><summary>Fit and fabric</summary><div class="body"><ul>'+
+          '<li>400 gsm brushed cotton fleece, 80/20 with recycled polyester</li>'+
+          '<li>Boxy body, dropped shoulder, ribbed cuff and hem</li>'+
+          '<li>Model is 6\'0" wearing a large</li>'+
+          '<li>Runs true to size, size down for a closer fit</li></ul></div></details>'+
+        '<details><summary>Care</summary><div class="body"><ul>'+
+          '<li>Do not bleach</li><li>Wash cold on a gentle cycle</li><li>Do not tumble dry</li>'+
+          '<li>Iron low, avoid the print</li><li>Do not dry clean</li></ul></div></details>'+
+        '<details><summary>Shipping and returns</summary><div class="body">'+
+          'Everything is sewn and boxed before the run opens, so orders leave within 48 hours. '+
+          'Free shipping over $150. Unworn returns accepted for 30 days.</div></details>'+
+      '</div>'+
+    '</div>'+
+  '</section>';
+}
+
+function pageCart(){
+  var h='<div class="crumb"><a href="#/">Home</a><span>/</span><span>Bag</span></div>'+
+        '<section class="cart-wrap"><div class="section-label">Your bag</div>';
+  if(!cart.length){
+    return h+'<div class="empty">'+sym('wash')+'<p>Nothing in the bag yet</p>'+
+      '<a class="btn" href="#/shop">Browse the run</a></div></section>';
+  }
+  h+='<div class="cart-grid"><div>';
+  for(var i=0;i<cart.length;i++){
+    var l=cart[i];
+    h+='<div class="li">'+
+      '<div class="pic"><img src="'+l.img+'" alt="'+l.name+'"></div>'+
+      '<div><p class="nm">'+l.name+'</p>'+
+        '<p class="attrs">'+l.colorway+' &middot; Size '+l.size+'</p>'+
+        '<div class="qty"><button type="button" data-line="'+i+'" data-d="-1" aria-label="Decrease">&minus;</button>'+
+          '<span>'+l.qty+'</span>'+
+          '<button type="button" data-line="'+i+'" data-d="1" aria-label="Increase">+</button></div>'+
+        '<div style="margin-top:14px"><button class="rm" data-rm="'+i+'">Remove</button></div>'+
+      '</div>'+
+      '<div class="amt">'+money(l.qty*l.price)+'</div>'+
+    '</div>';
+  }
+  h+='<div style="margin-top:28px"><a class="btn ghost" href="#/shop">Keep looking</a></div></div>'+
+     summaryBox(true)+'</div></section>';
+  return h;
+}
+
+function pageCheckout(){
+  if(!cart.length) return pageCart();
+  var mini='';
+  for(var i=0;i<cart.length;i++){
+    var l=cart[i];
+    mini+='<div class="mini"><div class="pic"><img src="'+l.img+'" alt=""></div>'+
+      '<div class="t"><b>'+l.name+'</b><span>Size '+l.size+' &middot; Qty '+l.qty+'</span></div>'+
+      '<div class="a">'+money(l.qty*l.price)+'</div></div>';
+  }
+  var sub=subtotal(), ship=shipCost();
+  return '<div class="crumb"><a href="#/">Home</a><span>/</span><a href="#/cart">Bag</a><span>/</span><span>Checkout</span></div>'+
+  '<section class="co-grid"><form id="cof" novalidate>'+
+    '<fieldset><legend>Contact</legend><div class="fields">'+
+      '<div class="f full"><label for="email">Email</label><input id="email" type="email" placeholder="name@address" autocomplete="email"><span class="err">Enter a valid email</span></div>'+
+    '</div></fieldset>'+
+    '<fieldset><legend>Ship to</legend><div class="fields">'+
+      '<div class="f"><label for="fn">First name</label><input id="fn" autocomplete="given-name"><span class="err">Required</span></div>'+
+      '<div class="f"><label for="ln">Last name</label><input id="ln" autocomplete="family-name"><span class="err">Required</span></div>'+
+      '<div class="f full"><label for="a1">Address</label><input id="a1" autocomplete="address-line1"><span class="err">Required</span></div>'+
+      '<div class="f"><label for="city">City</label><input id="city" autocomplete="address-level2"><span class="err">Required</span></div>'+
+      '<div class="f"><label for="zip">Postal code</label><input id="zip" autocomplete="postal-code"><span class="err">Required</span></div>'+
+      '<div class="f full"><label for="country">Country</label><select id="country">'+
+        '<option>United States</option><option>Canada</option><option>Mexico</option>'+
+        '<option>United Kingdom</option><option>Australia</option></select></div>'+
+    '</div></fieldset>'+
+    '<fieldset><legend>Payment</legend><div class="fields">'+
+      '<div class="f full"><label for="cc">Card number</label><input id="cc" inputmode="numeric" placeholder="0000 0000 0000 0000"><span class="err">Enter 16 digits</span></div>'+
+      '<div class="f"><label for="exp">Expiry</label><input id="exp" placeholder="MM / YY"><span class="err">Required</span></div>'+
+      '<div class="f"><label for="cvc">Security code</label><input id="cvc" inputmode="numeric" placeholder="123"><span class="err">Required</span></div>'+
+    '</div></fieldset>'+
+    '<button class="btn wide" type="submit">Place order &mdash; '+money(sub+ship)+'</button>'+
+    '<p style="margin:18px 0 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dust);line-height:1.9">Demo only. No card is charged and nothing is sent.</p>'+
+  '</form>'+
+  '<aside class="summary"><h3>In your bag</h3>'+mini+
+    '<div class="sline" style="margin-top:16px"><span class="muted">Subtotal</span><span>'+money(sub)+'</span></div>'+
+    '<div class="sline"><span class="muted">Shipping</span><span>'+(ship===0?'Free':money(ship))+'</span></div>'+
+    '<div class="sline total"><span>Total</span><span>'+money(sub+ship)+'</span></div>'+
+  '</aside></section>';
+}
+
+function pageDone(){
+  if(!order) return pageHome();
+  var mini='';
+  for(var i=0;i<order.items.length;i++){
+    var l=order.items[i];
+    mini+='<div class="mini"><div class="pic"><img src="'+l.img+'" alt=""></div>'+
+      '<div class="t"><b>'+l.name+'</b><span>Size '+l.size+' &middot; Qty '+l.qty+'</span></div>'+
+      '<div class="a">'+money(l.qty*l.price)+'</div></div>';
+  }
+  return '<section class="done"><div class="rosette">'+ROSETTE+'</div>'+
+    '<h1 class="hand">ORDER PLACED</h1>'+
+    '<div class="oid">No. '+order.id+' &middot; Confirmation sent to '+order.email+'</div>'+
+    '<div class="card"><div class="k">Keep it this way</div><div class="row">'+
+      sym('bleach')+sym('wash')+sym('tumble')+sym('iron')+sym('dryclean')+
+    '</div></div>'+
+    '<div class="actions"><a class="btn" href="#/shop">Back to the shop</a>'+
+      '<a class="btn ghost" href="#/">Home</a></div>'+
+  '</section>'+
+  '<section style="padding-bottom:clamp(50px,8vw,90px)"><div class="section-label">What you ordered</div>'+
+    '<div style="max-width:520px">'+mini+
+    '<div class="sline total"><span>Total</span><span>'+money(order.total)+'</span></div></div></section>';
+}
+
+/* ---------- router ---------- */
+function route(){
+  var h = location.hash || '#/';
+  var view = document.getElementById('view');
+  var parts = h.replace('#/','').split('/');
+  var html;
+  if(parts[0]==='' ) html = pageHome();
+  else if(parts[0]==='shop') html = pageShop();
+  else if(parts[0]==='care') html = pageCare();
+  else if(parts[0]==='make') html = pageMake();
+  else if(parts[0]==='product') html = pageProduct(parts[1]);
+  else if(parts[0]==='cart') html = pageCart();
+  else if(parts[0]==='checkout') html = pageCheckout();
+  else if(parts[0]==='done') html = pageDone();
+  else html = pageHome();
+  view.innerHTML = html;
+  window.scrollTo(0,0);
+  syncBag();
+  var links = document.querySelectorAll('#nav a');
+  for(var i=0;i<links.length;i++)
+    links[i].classList.toggle('on', links[i].getAttribute('href')===h);
+  if(parts[0]==='product') wireProduct(parts[1]);
+  if(parts[0]==='checkout') wireCheckout();
+}
+
+/* ---------- page wiring ---------- */
+function wireProduct(id){
+  var p=find(id); if(!p) return;
+  var chosen=null, qty=1;
+  var addbtn=document.getElementById('addbtn');
+  var msg=document.getElementById('stockmsg');
+
+  document.getElementById('sizes').addEventListener('click', function(e){
+    var b=e.target.closest('.sz'); if(!b||b.disabled) return;
+    var all=this.querySelectorAll('.sz');
+    for(var i=0;i<all.length;i++) all[i].setAttribute('aria-pressed','false');
+    b.setAttribute('aria-pressed','true');
+    chosen=b.dataset.size;
+    var left=p.sizes[chosen];
+    msg.textContent = left<=12 ? left+' left' : 'In stock';
+    addbtn.disabled=false; addbtn.textContent='Add to bag';
+  });
+
+  document.querySelector('.qty').addEventListener('click', function(e){
+    var b=e.target.closest('[data-q]'); if(!b) return;
+    qty=Math.max(1, Math.min(9, qty+parseInt(b.dataset.q,10)));
+    document.getElementById('qty').textContent=qty;
+  });
+
+  document.querySelector('.thumbs').addEventListener('click', function(e){
+    var b=e.target.closest('.thumb'); if(!b) return;
+    var all=this.querySelectorAll('.thumb');
+    for(var i=0;i<all.length;i++) all[i].setAttribute('aria-pressed','false');
+    b.setAttribute('aria-pressed','true');
+    document.getElementById('mainshot').src=b.dataset.shot;
+  });
+
+  addbtn.addEventListener('click', function(){
+    if(!chosen) return;
+    addToCart(p, chosen, qty);
+    toast(p.name+' &mdash; size '+chosen+' added');
+    document.getElementById('toast').textContent=p.name+' \u2014 size '+chosen+' added';
+  });
+}
+
+function wireCheckout(){
+  document.getElementById('cof').addEventListener('submit', function(e){
+    e.preventDefault();
+    var ok=true;
+    function bad(id, test){
+      var el=document.getElementById(id), f=el.closest('.f');
+      var good=test(el.value.trim());
+      f.classList.toggle('bad', !good);
+      if(!good) ok=false;
+    }
+    bad('email', function(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); });
+    bad('fn', function(v){ return v.length>0; });
+    bad('ln', function(v){ return v.length>0; });
+    bad('a1', function(v){ return v.length>0; });
+    bad('city', function(v){ return v.length>0; });
+    bad('zip', function(v){ return v.length>0; });
+    bad('cc', function(v){ return v.replace(/\D/g,'').length===16; });
+    bad('exp', function(v){ return v.length>0; });
+    bad('cvc', function(v){ return v.length>0; });
+    if(!ok){ toast('Check the highlighted fields'); return; }
+    var _email = document.getElementById('email').value.trim();
+    var _snapshot = cart.slice();
+    var _localTotal = subtotal()+shipCost();
+    var _payload = {
+      email: _email,
+      firstName: document.getElementById('fn').value.trim(),
+      lastName: document.getElementById('ln').value.trim(),
+      address: document.getElementById('a1').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      zip: document.getElementById('zip').value.trim(),
+      country: document.getElementById('country').value,
+      items: cart.map(function(c){ return { id:c.id, size:c.size, qty:c.qty }; })
+    };
+    var _btn = document.querySelector('#cof button[type=submit]');
+    if(_btn){ _btn.disabled = true; _btn.textContent = 'Placing order\u2026'; }
+    fetch('/api/store/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(_payload) })
+      .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(res){
+        if(!res.ok){ if(_btn){ _btn.disabled=false; } toast(res.j && res.j.error ? res.j.error : 'Checkout failed'); return; }
+        order = { id: res.j.orderNumber, email: _email, items: _snapshot, total: (res.j.total!=null? res.j.total : _localTotal) };
+        cart = []; syncBag();
+        location.hash='#/done';
+      })
+      .catch(function(){ if(_btn){ _btn.disabled=false; } toast('Checkout failed. Please try again.'); });
+  });
+}
+
+/* ---------- global handlers ---------- */
+document.addEventListener('click', function(e){
+  var go=e.target.closest('[data-go]');
+  if(go){ location.hash=go.dataset.go; return; }
+  var rm=e.target.closest('[data-rm]');
+  if(rm){ cart.splice(parseInt(rm.dataset.rm,10),1); route(); return; }
+  var st=e.target.closest('[data-line]');
+  if(st){
+    var i=parseInt(st.dataset.line,10), d=parseInt(st.dataset.d,10);
+    cart[i].qty+=d;
+    if(cart[i].qty<1) cart.splice(i,1);
+    route(); return;
+  }
+  var sg=e.target.closest('[data-act="signup"]');
+  if(sg){
+    var inp=sg.previousElementSibling;
+    if(inp && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inp.value.trim())){
+      toast('You are on the list'); inp.value='';
+    } else { toast('Enter a valid email'); }
+  }
+});
+document.getElementById('bagbtn').addEventListener('click', function(){ location.hash='#/cart'; });
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
