@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AdminPageHelp } from "@/components/AdminPageHelp";
+import { MediaUpload } from "@/components/MediaUpload";
 
 type HeroContent = {
   videoUrl?: string;
@@ -292,6 +293,42 @@ export default function AdminContentPage() {
     scheduleSave("three_columns", next);
   };
 
+  // Sets an uploaded image URL onto the right section's media field.
+  const applyMedia = (
+    section:
+      | "hero"
+      | "hero_2"
+      | "promo_left"
+      | "promo_right"
+      | "featured_split"
+      | "full_width_banner",
+    url: string,
+  ) => {
+    if (section === "hero") {
+      handleChange("videoUrl", url);
+    } else if (section === "hero_2") {
+      const next = { ...(hero2 ?? {}), imageUrl: url, videoUrl: undefined };
+      setHero2(next);
+      scheduleSave("hero_2", next);
+    } else if (section === "promo_left") {
+      const next = { ...(promoLeft ?? {}), imageUrl: url, videoUrl: undefined };
+      setPromoLeft(next);
+      scheduleSave("promo_left", next);
+    } else if (section === "promo_right") {
+      const next = { ...(promoRight ?? {}), imageUrl: url, videoUrl: undefined };
+      setPromoRight(next);
+      scheduleSave("promo_right", next);
+    } else if (section === "featured_split") {
+      const next = { ...(featured ?? {}), imageUrl: url, videoUrl: undefined };
+      setFeatured(next);
+      scheduleSave("featured_split", next);
+    } else if (section === "full_width_banner") {
+      const next = { ...(banner ?? {}), imageUrl: url, videoUrl: undefined };
+      setBanner(next);
+      scheduleSave("full_width_banner", next);
+    }
+  };
+
   const handleLayoutChange = async (next: HomepageLayout) => {
     setLayout(next);
     try {
@@ -419,6 +456,7 @@ export default function AdminContentPage() {
                     placeholder="https://..."
                     className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                   />
+                  <MediaUpload onUploaded={(url) => applyMedia("hero", url)} />
                 </div>
 
                 <div>
@@ -506,6 +544,7 @@ export default function AdminContentPage() {
                     placeholder="https://..."
                     className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                   />
+                  <MediaUpload onUploaded={(url) => applyMedia("hero_2", url)} />
                 </div>
                 <div>
                   <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
@@ -602,6 +641,7 @@ export default function AdminContentPage() {
                     placeholder="https://..."
                     className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                   />
+                  <MediaUpload onUploaded={(url) => applyMedia("promo_left", url)} />
                 </div>
                 <div>
                   <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
@@ -698,6 +738,7 @@ export default function AdminContentPage() {
                     placeholder="https://..."
                     className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                   />
+                  <MediaUpload onUploaded={(url) => applyMedia("promo_right", url)} />
                 </div>
                 <div>
                   <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
@@ -795,6 +836,7 @@ export default function AdminContentPage() {
                     placeholder="https://..."
                     className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                   />
+                  <MediaUpload onUploaded={(url) => applyMedia("featured_split", url)} />
                 </div>
                 <div>
                   <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
@@ -878,6 +920,7 @@ export default function AdminContentPage() {
                     placeholder="https://..."
                     className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                   />
+                  <MediaUpload onUploaded={(url) => applyMedia("full_width_banner", url)} />
                 </div>
                 <div>
                   <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
@@ -954,6 +997,7 @@ export default function AdminContentPage() {
                           placeholder="https://..."
                           className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
                         />
+                        <MediaUpload onUploaded={(url) => handleColumnChange(i, "imageUrl", url)} label="Upload" />
                       </div>
                       <div className="grid gap-3 md:grid-cols-2">
                         <div>

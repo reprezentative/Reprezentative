@@ -6,11 +6,13 @@
     "dev": "next dev -p 3345",
     "build": "next build",
     "start": "next start -p 3345",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^2.9.0",
     "@stripe/stripe-js": "^8.5.3",
+    "@supabase/supabase-js": "^2.112.3",
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",

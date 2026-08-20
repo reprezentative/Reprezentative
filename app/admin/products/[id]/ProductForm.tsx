@@ -46,11 +46,15 @@ export function ProductForm({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<AdminProductFormValues>({
     defaultValues: {
@@ -109,6 +113,25 @@ export function ProductForm({
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "Upload failed");
+      setValue("imageUrl", body.url, { shouldDirty: true });
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const currentImage = watch("imageUrl");
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -162,8 +185,36 @@ export function ProductForm({
               placeholder="https://…"
               {...register("imageUrl")}
             />
+            <div className="mt-2 flex items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center rounded-md border border-neutral-700 px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.16em] text-neutral-200 hover:bg-neutral-900">
+                {uploading ? "Uploading…" : "Upload image"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImageUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {currentImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={currentImage}
+                  alt="Product preview"
+                  className="h-12 w-12 rounded object-cover ring-1 ring-neutral-800"
+                />
+              ) : null}
+            </div>
+            {uploadError && (
+              <p className="mt-1 text-[0.7rem] text-red-400">{uploadError}</p>
+            )}
             <p className="mt-1 text-[0.65rem] text-neutral-500">
-              Paste an image URL for this product. Optional — can be added later.
+              Upload an image (max 5 MB) or paste a URL. Optional — can be added
+              later.
             </p>
           </div>
 
