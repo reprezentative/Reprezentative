@@ -40,9 +40,12 @@ export async function POST(req: NextRequest) {
       sku,
       category,
       imageUrl,
+      images: imagesInput,
       featured,
       isNew,
       inStock,
+      status,
+      tags,
       // Optional initial COGS captured on the product form.
       fabricCost,
       laborCost,
@@ -56,9 +59,12 @@ export async function POST(req: NextRequest) {
       sku?: string;
       category?: string;
       imageUrl?: string;
+      images?: string[];
       featured?: boolean;
       isNew?: boolean;
       inStock?: boolean;
+      status?: string;
+      tags?: string[];
       fabricCost?: number;
       laborCost?: number;
       freightCost?: number;
@@ -81,7 +87,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cleanImage = imageUrl && imageUrl.trim().length > 0 ? imageUrl.trim() : null;
+    const cleanImages = Array.isArray(imagesInput)
+      ? imagesInput.filter((u) => typeof u === "string" && u.trim().length > 0)
+      : imageUrl && imageUrl.trim().length > 0
+        ? [imageUrl.trim()]
+        : [];
+    const VALID_STATUS = ["DRAFT", "ACTIVE", "ARCHIVED"];
 
     const initialCogs = {
       fabricCost: Number(fabricCost) || 0,
@@ -108,13 +119,18 @@ export async function POST(req: NextRequest) {
           material: "",
           fit: "REGULAR",
           category,
-          // No fake stock photos — only store an image if one was provided.
-          images: cleanImage ? [cleanImage] : [],
+          // No fake stock photos — only store images that were provided.
+          images: cleanImages,
           colors: [{ name: "Default", hex: "#000000", available: true }] as any,
           sizes: [{ name: "One Size", available: true }] as any,
           featured: !!featured,
           isNew: isNew ?? true,
           inStock: inStock ?? true,
+          status:
+            status && VALID_STATUS.includes(status) ? (status as any) : "ACTIVE",
+          tags: Array.isArray(tags)
+            ? tags.map((t) => String(t).trim()).filter(Boolean)
+            : [],
         },
       });
 

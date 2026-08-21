@@ -226,8 +226,19 @@ export default async function AdminProductsPage({
                       href={`/admin/products/${product.id}`}
                       className="inline-flex flex-col gap-0.5"
                     >
-                      <span className="text-xs font-medium text-white">
+                      <span className="flex items-center gap-2 text-xs font-medium text-white">
                         {product.name}
+                        {product.status !== "ACTIVE" && (
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.1em] ${
+                              product.status === "DRAFT"
+                                ? "bg-amber-500/15 text-amber-300"
+                                : "bg-neutral-700/50 text-neutral-300"
+                            }`}
+                          >
+                            {product.status}
+                          </span>
+                        )}
                       </span>
                       <span className="text-[0.7rem] text-neutral-500">
                         {product.slug}

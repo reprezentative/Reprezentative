@@ -30,9 +30,12 @@ export default async function AdminProductEditPage({
     sku: product.sku,
     category: product.category,
     imageUrl: product.images[0] ?? "",
+    images: product.images,
     featured: product.featured,
     isNew: product.isNew,
     inStock: product.inStock,
+    status: product.status,
+    tags: product.tags,
   };
 
   return (

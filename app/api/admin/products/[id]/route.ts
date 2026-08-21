@@ -22,9 +22,12 @@ export async function PUT(
       sku,
       category,
       imageUrl,
+      images: imagesInput,
       featured,
       isNew,
       inStock,
+      status,
+      tags,
     } = body as {
       name?: string;
       slug?: string;
@@ -33,9 +36,12 @@ export async function PUT(
       sku?: string;
       category?: string;
       imageUrl?: string;
+      images?: string[];
       featured?: boolean;
       isNew?: boolean;
       inStock?: boolean;
+      status?: string;
+      tags?: string[];
     };
 
     const existing = await prisma.product.findUnique({ where: { id } });
@@ -43,12 +49,14 @@ export async function PUT(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    const images =
-      imageUrl && imageUrl.length > 0
+    // Prefer an explicit images[] array; fall back to legacy single imageUrl.
+    const images = Array.isArray(imagesInput)
+      ? imagesInput.filter((u) => typeof u === "string" && u.length > 0)
+      : imageUrl && imageUrl.length > 0
         ? [imageUrl]
-        : existing.images && existing.images.length > 0
-          ? existing.images
-          : [];
+        : existing.images;
+
+    const VALID_STATUS = ["DRAFT", "ACTIVE", "ARCHIVED"];
 
     const updated = await prisma.product.update({
       where: { id },
@@ -63,6 +71,13 @@ export async function PUT(
         featured: typeof featured === "boolean" ? featured : existing.featured,
         isNew: typeof isNew === "boolean" ? isNew : existing.isNew,
         inStock: typeof inStock === "boolean" ? inStock : existing.inStock,
+        status:
+          status && VALID_STATUS.includes(status)
+            ? (status as any)
+            : existing.status,
+        tags: Array.isArray(tags)
+          ? tags.map((t) => String(t).trim()).filter(Boolean)
+          : existing.tags,
       },
     });
 

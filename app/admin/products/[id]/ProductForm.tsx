@@ -13,10 +13,10 @@ export type AdminProductFormValues = {
   price: number;
   sku: string;
   category: string;
-  imageUrl: string;
   featured: boolean;
   isNew: boolean;
   inStock: boolean;
+  status: string;
   // Initial COGS captured on create (persisted to ProductCOGS by the API).
   fabricCost: number;
   laborCost: number;
@@ -33,9 +33,12 @@ export type AdminProductInitial = {
   sku: string;
   category: string;
   imageUrl?: string;
+  images?: string[];
   featured: boolean;
   isNew: boolean;
   inStock: boolean;
+  status?: string;
+  tags?: string[];
 };
 
 export function ProductForm({
@@ -47,13 +50,21 @@ export function ProductForm({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>(
+    product.images && product.images.length > 0
+      ? product.images
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [],
+  );
+  const [tags, setTags] = useState<string[]>(product.tags ?? []);
+  const [tagInput, setTagInput] = useState("");
+  const [urlInput, setUrlInput] = useState("");
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<AdminProductFormValues>({
     defaultValues: {
@@ -63,10 +74,10 @@ export function ProductForm({
       price: product.price,
       sku: product.sku,
       category: product.category,
-      imageUrl: product.imageUrl ?? "",
       featured: product.featured,
       isNew: product.isNew,
       inStock: product.inStock,
+      status: product.status ?? "ACTIVE",
       fabricCost: 0,
       laborCost: 0,
       freightCost: 0,
@@ -74,12 +85,25 @@ export function ProductForm({
     },
   });
 
+  const addImage = (url: string) =>
+    setImages((prev) => (prev.includes(url) ? prev : [...prev, url]));
+  const removeImage = (i: number) =>
+    setImages((prev) => prev.filter((_, j) => j !== i));
+  const makePrimary = (i: number) =>
+    setImages((prev) => [prev[i], ...prev.filter((_, j) => j !== i)]);
+
+  const addTag = (t: string) => {
+    const v = t.trim();
+    if (v && !tags.includes(v)) setTags((prev) => [...prev, v]);
+    setTagInput("");
+  };
+
   const onSubmit = async (data: AdminProductFormValues) => {
     setIsSubmitting(true);
     setStatusMessage(null);
 
     try {
-      const payload = JSON.stringify(data);
+      const payload = JSON.stringify({ ...data, images, tags });
       const response =
         mode === "edit" && product.id
           ? await fetch(`/api/admin/products/${product.id}`, {
@@ -111,8 +135,6 @@ export function ProductForm({
       setIsSubmitting(false);
     }
   };
-
-  const currentImage = watch("imageUrl");
 
   return (
     <form
@@ -159,32 +181,75 @@ export function ProductForm({
 
           <div>
             <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
-              Primary Image URL
+              Images
             </label>
-            <input
-              type="url"
-              className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
-              placeholder="https://…"
-              {...register("imageUrl")}
-            />
-            <div className="mt-2 flex items-center gap-3">
-              <MediaPicker
-                onSelect={(url) =>
-                  setValue("imageUrl", url, { shouldDirty: true })
-                }
-                label="Upload image"
+            {images.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {images.map((url, i) => (
+                  <div key={url + i} className="w-16">
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt=""
+                        className="h-16 w-16 rounded object-cover ring-1 ring-neutral-800"
+                      />
+                      {i === 0 && (
+                        <span className="absolute left-0 top-0 rounded-br bg-emerald-600 px-1 text-[0.5rem] font-semibold uppercase text-white">
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex gap-1">
+                      {i !== 0 && (
+                        <button
+                          type="button"
+                          onClick={() => makePrimary(i)}
+                          className="flex-1 rounded border border-neutral-700 text-[0.5rem] uppercase text-neutral-300 hover:bg-neutral-900"
+                          title="Make primary"
+                        >
+                          ★
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="flex-1 rounded border border-rose-900/60 text-[0.55rem] text-rose-300 hover:bg-rose-950/40"
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <MediaPicker onSelect={addImage} label="Add image" />
+            <div className="mt-2 flex gap-2">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="…or paste an image URL"
+                className="h-8 flex-1 rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
               />
-              {currentImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={currentImage}
-                  alt="Product preview"
-                  className="h-12 w-12 rounded object-cover ring-1 ring-neutral-800"
-                />
-              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  const u = urlInput.trim();
+                  if (u) {
+                    addImage(u);
+                    setUrlInput("");
+                  }
+                }}
+                className="rounded-md border border-neutral-700 px-3 text-[0.6rem] uppercase tracking-[0.16em] text-neutral-200 hover:bg-neutral-900"
+              >
+                Add
+              </button>
             </div>
             <p className="mt-1 text-[0.65rem] text-neutral-500">
-              Upload, choose from the Media Library, or paste a URL. Optional.
+              First image is the primary (shown on the store). Upload, pick from
+              the Media Library, or paste URLs.
             </p>
           </div>
 
@@ -300,6 +365,60 @@ export function ProductForm({
                 In Stock
               </label>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+                Status
+              </label>
+              <select
+                {...register("status")}
+                className="h-9 w-full rounded-md border border-neutral-800 bg-black px-2 text-xs text-white outline-none focus:border-neutral-500"
+              >
+                <option value="ACTIVE">Active (visible on store)</option>
+                <option value="DRAFT">Draft (hidden)</option>
+                <option value="ARCHIVED">Archived (hidden)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+              Tags
+            </label>
+            {tags.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {tags.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1 rounded-full bg-neutral-800 px-2 py-0.5 text-[0.65rem] text-neutral-200"
+                  >
+                    {t}
+                    <button
+                      type="button"
+                      onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
+                      className="text-neutral-400 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  addTag(tagInput);
+                }
+              }}
+              placeholder="Type a tag and press Enter (e.g. hoodie, new-drop)"
+              className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
+            />
           </div>
 
           <div className="flex items-center gap-3">

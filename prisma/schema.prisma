@@ -87,6 +87,8 @@ model Product {
   featured Boolean @default(false)
   isNew    Boolean @default(false)
   inStock  Boolean @default(true)
+  status   ProductStatus @default(ACTIVE)
+  tags     String[]
 
   // SEO
   metaTitle       String?
@@ -116,6 +118,12 @@ enum FitType {
   REGULAR
   OVERSIZED
   SLIM
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
 
 // ============================================

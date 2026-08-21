@@ -32,7 +32,7 @@ function orderSizes(sizes: Record<string, number>) {
 
 export async function GET() {
   const products = await prisma.product.findMany({
-    where: { inStock: true },
+    where: { inStock: true, status: "ACTIVE" },
     include: { variants: { where: { discontinued: false } } },
     orderBy: { createdAt: "desc" },
   });
