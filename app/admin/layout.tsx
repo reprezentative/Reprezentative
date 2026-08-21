@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { AdminSignOut } from "./AdminSignOut";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Defense-in-depth: middleware.ts already gates /admin/* at the edge, but we
@@ -240,6 +241,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   )}
                 </div>
               </div>
+              <AdminSignOut />
             </div>
           </nav>
         </aside>
