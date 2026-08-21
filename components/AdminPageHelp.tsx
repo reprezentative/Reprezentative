@@ -22,7 +22,20 @@ export type AdminHelpKey =
   | "ai-assistant"
   | "settings"
   | "api-keys"
-  | "media";
+  | "media"
+  | "collections"
+  | "size-charts"
+  | "discounts"
+  | "abandoned-carts"
+  | "returns"
+  | "reviews"
+  | "back-in-stock"
+  | "security"
+  | "staff"
+  | "audit-log"
+  | "low-stock"
+  | "tax"
+  | "reports";
 
 type HelpCopy = {
   title: string;
@@ -256,6 +269,50 @@ const HELP_CONTENT: Record<AdminHelpKey, HelpCopy> = {
       "Settings changes take effect immediately across the app; use caution in production environments.",
     ],
   },
+  "abandoned-carts": {
+    title: "Abandoned Carts",
+    summary:
+      "Shoppers who entered their email at checkout but didn't finish. Send a recovery email to bring them back.",
+    bullets: [
+      "Carts are captured when a shopper types their email at checkout.",
+      "Send a reminder email per cart; carts are marked recovered once they order.",
+      "The email activity log shows sent/skipped/failed for all transactional emails.",
+    ],
+    caveats: [
+      "Emails are SKIPPED until you add an email provider key (Resend/SendGrid).",
+    ],
+  },
+  discounts: {
+    title: "Discounts & Gift Cards",
+    summary:
+      "Create promo codes (percent, fixed amount, or free shipping) and issue gift cards that customers redeem at checkout.",
+    bullets: [
+      "Codes can require a minimum subtotal and cap total uses.",
+      "Toggle a code on/off anytime; usage is tracked.",
+      "Gift cards get a unique code and draw down as they're used.",
+    ],
+  },
+  "size-charts": {
+    title: "Size Charts",
+    summary:
+      "Create reusable sizing tables (CSV: first row is headers) to display on product pages.",
+    bullets: [
+      "Add a chart, give it a name, and edit the CSV — the preview updates live.",
+      "Click Save all to persist changes.",
+    ],
+  },
+  collections: {
+    title: "Collections",
+    summary:
+      "Group products into collections (e.g. New Arrivals, Hoodies, Summer) for merchandising and storefront browsing.",
+    bullets: [
+      "Create a collection, then assign products to it from the edit panel.",
+      "Toggle Active to control whether it's shown on the storefront.",
+    ],
+    caveats: [
+      "Deleting a collection does not delete its products.",
+    ],
+  },
   media: {
     title: "Media Library",
     summary:
@@ -268,6 +325,97 @@ const HELP_CONTENT: Record<AdminHelpKey, HelpCopy> = {
     caveats: [
       "Images are stored in Supabase Storage and served via public URLs.",
       "Deleting an image here does not automatically remove it from products/content already using its URL.",
+    ],
+  },
+  security: {
+    title: "Security",
+    summary:
+      "Enable two-factor authentication (2FA) on your admin account using any authenticator app.",
+    bullets: [
+      "Set up 2FA, scan/enter the secret in your app, then confirm with a 6-digit code.",
+      "Once enabled, you'll enter a code from your app each time you sign in.",
+      "You can disable 2FA anytime from this page.",
+    ],
+  },
+  staff: {
+    title: "Staff & Permissions",
+    summary:
+      "Add team members and control what they can access. Admins have full access; staff get only the permissions you grant.",
+    bullets: [
+      "Invite by email — existing customers are upgraded, new members get a temp password.",
+      "Toggle per-area permissions for staff (products, orders, discounts, etc.).",
+      "The last remaining admin can't be demoted.",
+    ],
+  },
+  "audit-log": {
+    title: "Audit Log",
+    summary:
+      "A chronological record of important admin actions for accountability and troubleshooting.",
+    bullets: [
+      "Captures order status changes, refunds, returns, review moderation, and staff changes.",
+      "Each entry shows who did what, when, and relevant details.",
+    ],
+  },
+  "low-stock": {
+    title: "Low-stock Alerts",
+    summary:
+      "Variants at or below their restock threshold so you can reorder before selling out.",
+    bullets: [
+      "Set each variant's restock threshold in the Inventory Manager.",
+      "Out-of-stock variants are flagged separately from low ones.",
+    ],
+  },
+  tax: {
+    title: "Tax",
+    summary:
+      "Configure a single sales-tax rate applied to the discounted subtotal at checkout.",
+    bullets: [
+      "Turn tax on/off and set the percentage (e.g. 8.25).",
+      "The label you set appears on customer-facing totals and emails.",
+    ],
+  },
+  reports: {
+    title: "Reports",
+    summary:
+      "Revenue, average order value, sales trends, and top products at a glance.",
+    bullets: [
+      "Revenue excludes drafts, cancellations, and refunds.",
+      "See a 14-day revenue trend, top sellers, and order status breakdown.",
+    ],
+  },
+  reviews: {
+    title: "Reviews",
+    summary:
+      "Moderate customer product reviews. Only approved reviews show on the storefront, with their star rating rolled into the product's average.",
+    bullets: [
+      "New reviews arrive as Pending — approve to publish or reject to hide.",
+      "Use the status filter to focus on what needs attention.",
+      "Delete removes a review permanently.",
+    ],
+  },
+  "back-in-stock": {
+    title: "Back-in-stock Requests",
+    summary:
+      "Shoppers who asked to be notified when a sold-out size returns. Restock the variant, then email them.",
+    bullets: [
+      "Requests are captured from the product page when a size is out of stock.",
+      "The stock column shows current availability so you know who to contact.",
+    ],
+    caveats: [
+      "Automatic notification emails are SKIPPED until an email provider key is added.",
+    ],
+  },
+  returns: {
+    title: "Returns & RMA",
+    summary:
+      "Track return requests, restock returned units, and issue refunds. Create a return from any order's detail page.",
+    bullets: [
+      "Choose which items and quantities are coming back; restock puts units back into inventory.",
+      "Issue a refund at creation time, or update the return's status as it progresses.",
+      "Refunds process through Stripe when a payment is on file; otherwise the return is recorded for your records.",
+    ],
+    caveats: [
+      "Restock only adjusts inventory for items whose product/size/color still match a variant.",
     ],
   },
   "api-keys": {

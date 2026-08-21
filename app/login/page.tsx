@@ -12,6 +12,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [token, setToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ export default function LoginPage() {
         redirect: false,
         email,
         password,
+        token,
         callbackUrl,
       });
 
@@ -39,7 +41,13 @@ export default function LoginPage() {
       }
 
       if (result.error) {
-        setStatus("Invalid email or password.");
+        if (result.error.includes("2FA")) {
+          setStatus(
+            "This account requires an authenticator code. Enter the 6-digit code below.",
+          );
+        } else {
+          setStatus("Invalid email or password.");
+        }
         return;
       }
 
@@ -113,6 +121,25 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-400">
+              Authenticator code{" "}
+              <span className="font-normal normal-case tracking-normal text-neutral-600">
+                (only if 2FA is enabled)
+              </span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+              className="h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs tracking-[0.3em] text-white outline-none placeholder:text-neutral-600 focus:border-neutral-500"
+              placeholder="123456"
+              maxLength={6}
             />
           </div>
 

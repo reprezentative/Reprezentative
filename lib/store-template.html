@@ -277,6 +277,46 @@ footer{flex:none}
 .mk-cta p{margin:0;flex:1;min-width:240px;font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--dust);line-height:1.9}
 
+/* ---------- shop toolbar ---------- */
+.shopbar{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 26px}
+.shopbar input,.shopbar select{background:transparent;border:1px solid var(--line);color:var(--bone);
+  font-family:inherit;font-size:12px;letter-spacing:.06em;padding:10px 14px;border-radius:2px}
+.shopbar input{flex:1;min-width:200px}
+.shopbar input:focus,.shopbar select:focus{border-color:var(--blush);outline:none}
+.shopbar select{cursor:pointer}
+.shopbar option{background:#141210;color:var(--bone)}
+
+/* ---------- ratings ---------- */
+.rev-stars{color:var(--blush);letter-spacing:2px}
+.rev-mini{font-size:10px;letter-spacing:.1em;color:var(--dust)}
+.card-rev{display:block;margin-top:4px;font-size:9.5px;letter-spacing:.08em;color:var(--dust)}
+.card-rev .rev-stars{font-size:10px}
+
+/* ---------- back in stock ---------- */
+.notify-box{border:1px dashed var(--line);border-radius:2px;padding:14px 16px;margin:14px 0}
+.notify-box p{margin:0 0 10px;font-size:11px;letter-spacing:.08em;color:var(--dust);line-height:1.7}
+.notify-row{display:flex;gap:10px;flex-wrap:wrap}
+.notify-row input{flex:1;min-width:180px;background:transparent;border:1px solid var(--line);
+  color:var(--bone);font-family:inherit;font-size:12px;padding:9px 12px;border-radius:2px}
+.notify-row input:focus{border-color:var(--blush);outline:none}
+
+/* ---------- reviews ---------- */
+.reviews{border-top:1px dashed var(--line);padding:clamp(40px,6vw,72px) 0}
+.revlist{display:grid;gap:20px;margin-bottom:40px}
+.rev{border:1px solid var(--line);border-radius:2px;padding:18px 20px}
+.rev-head{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.rev-name{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dust)}
+.rev-title{font-size:14px;margin-bottom:6px;color:var(--bone)}
+.rev-body{margin:0;font-size:13px;line-height:1.7;color:var(--bone)}
+.revform{max-width:520px;display:grid;gap:12px}
+.revform h3{margin:0;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust)}
+.revform input,.revform textarea{background:transparent;border:1px solid var(--line);color:var(--bone);
+  font-family:inherit;font-size:13px;padding:10px 12px;border-radius:2px;width:100%}
+.revform input:focus,.revform textarea:focus{border-color:var(--blush);outline:none}
+.revstars{display:flex;gap:4px}
+.revstars button{background:none;border:none;cursor:pointer;color:var(--blush);font-size:26px;line-height:1;padding:0}
+.soldout.sz{opacity:.55}
+
 </style>
 </head>
 <body>
@@ -335,6 +375,40 @@ var PRODUCTS = __PRODUCTS__;
 var SIZES = ['S','M','L','XL','XXL'];
 function find(id){ for(var i=0;i<PRODUCTS.length;i++) if(PRODUCTS[i].id===id) return PRODUCTS[i]; return null; }
 function money(n){ return '$'+n.toFixed(2); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function stars(r){ r=Math.round(r||0); var s=''; for(var i=1;i<=5;i++) s+= i<=r ? '★' : '☆'; return s; }
+function ratingLine(p){
+  if(!p.reviewCount) return '<span class="rev-mini muted">No reviews yet</span>';
+  return '<span class="rev-mini"><span class="rev-stars">'+stars(p.rating)+'</span> '+
+    p.rating.toFixed(1)+' ('+p.reviewCount+')</span>';
+}
+
+/* ---------- shop search / sort state ---------- */
+var shopQuery='', shopSort='new';
+function filterSort(list){
+  var q=shopQuery.trim().toLowerCase();
+  var out=list.filter(function(p){
+    if(!q) return true;
+    return (p.name+' '+(p.colorway||'')+' '+(p.blurb||'')).toLowerCase().indexOf(q)>=0;
+  });
+  out.sort(function(a,b){
+    if(shopSort==='price-asc') return a.price-b.price;
+    if(shopSort==='price-desc') return b.price-a.price;
+    if(shopSort==='rating') return (b.rating||0)-(a.rating||0);
+    if(shopSort==='name') return a.name.localeCompare(b.name);
+    return 0; /* 'new' keeps server order (newest first) */
+  });
+  return out;
+}
+function shopControls(){
+  function opt(v,l){ return '<option value="'+v+'"'+(shopSort===v?' selected':'')+'>'+l+'</option>'; }
+  return '<div class="shopbar">'+
+    '<input id="shopsearch" type="search" placeholder="Search the run" value="'+esc(shopQuery)+'" aria-label="Search products">'+
+    '<select id="shopsort" aria-label="Sort products">'+
+      opt('new','Newest')+opt('price-asc','Price: low to high')+opt('price-desc','Price: high to low')+
+      opt('rating','Top rated')+opt('name','Name A–Z')+
+    '</select></div>';
+}
 
 /* ---------- state (in memory; resets on refresh) ---------- */
 var cart = [];
@@ -360,17 +434,25 @@ function toast(msg){
 }
 
 /* ---------- shared fragments ---------- */
+function totalStock(p){
+  var t=0, k=Object.keys(p.sizes||{});
+  for(var i=0;i<k.length;i++) t+=p.sizes[k[i]];
+  return t;
+}
 function productCard(p){
-  var out = p.sizes.S+p.sizes.M+p.sizes.L+p.sizes.XL+p.sizes.XXL === 0;
+  var out = totalStock(p) === 0;
   return '<button class="item" data-go="#/product/'+p.id+'">'+
     '<span class="frame"><img src="'+p.img+'" alt="'+p.name+'" loading="lazy"></span>'+
     '<span class="meta"><span class="name">'+p.name+'</span><span class="price">'+money(p.price)+'</span></span>'+
     '<span class="colorway'+(out?' soldout':'')+'">'+(out?'Sold out':p.colorway)+'</span>'+
+    '<span class="card-rev">'+ratingLine(p)+'</span>'+
   '</button>';
 }
-function grid(){
+function grid(list){
+  var items = list || PRODUCTS;
+  if(!items.length) return '<div class="empty" style="margin:40px 0">'+sym('wash')+'<p>Nothing matches that search</p></div>';
   var h='<div class="grid">';
-  for(var i=0;i<PRODUCTS.length;i++) h+=productCard(PRODUCTS[i]);
+  for(var i=0;i<items.length;i++) h+=productCard(items[i]);
   return h+'</div>';
 }
 function careRows(){
@@ -424,7 +506,8 @@ function pageMakeInner(){
 function pageShop(){
   return '<div class="crumb"><a href="#/">Home</a><span>/</span><span>Shop</span></div>'+
     '<section style="padding-bottom:clamp(60px,9vw,110px)">'+
-    '<div class="section-label">All goods &mdash; four pieces</div>'+grid()+'</section>'+enlist();
+    '<div class="section-label">All goods</div>'+shopControls()+
+    '<div id="shopgrid">'+grid(filterSort(PRODUCTS))+'</div></section>'+enlist();
 }
 function pageCare(){
   return '<div class="crumb"><a href="#/">Home</a><span>/</span><span>Care</span></div>'+
@@ -568,7 +651,7 @@ function pageProduct(id){
   var _skeys=Object.keys(p.sizes||{});
   for(var i=0;i<_skeys.length;i++){
     var s=_skeys[i], left=p.sizes[s];
-    szh+='<button class="sz" data-size="'+s+'" aria-pressed="false"'+(left?'':' disabled')+'>'+s+'</button>';
+    szh+='<button class="sz'+(left?'':' soldout')+'" data-size="'+s+'" data-left="'+left+'" aria-pressed="false">'+s+'</button>';
   }
   return '<div class="crumb"><a href="#/">Home</a><span>/</span><a href="#/shop">Shop</a><span>/</span><span>'+p.name+'</span></div>'+
   '<section class="pdp">'+
@@ -582,10 +665,12 @@ function pageProduct(id){
     '<div>'+
       '<h1>'+p.name+'</h1>'+
       '<div class="sub">'+p.colorway+' &middot; Run of 200</div>'+
+      '<div class="sub rev-mini" id="pdprating">'+ratingLine(p)+'</div>'+
       '<div class="cost">'+money(p.price)+'</div>'+
       '<p class="blurb">'+p.blurb+'</p>'+
       '<div class="pick"><div class="lab"><span>Size</span><span id="stockmsg">Select a size</span></div>'+
       '<div class="sizes" id="sizes">'+szh+'</div></div>'+
+      '<div id="notify"></div>'+
       '<div class="qty"><button type="button" data-q="-1" aria-label="Decrease quantity">&minus;</button>'+
         '<span id="qty">1</span>'+
         '<button type="button" data-q="1" aria-label="Increase quantity">+</button></div>'+
@@ -604,6 +689,23 @@ function pageProduct(id){
           'Everything is sewn and boxed before the run opens, so orders leave within 48 hours. '+
           'Free shipping over $150. Unworn returns accepted for 30 days.</div></details>'+
       '</div>'+
+    '</div>'+
+  '</section>'+
+  '<section class="reviews" id="reviews"><div class="section-label">Reviews</div>'+
+    '<div id="revlist" class="revlist"><p class="muted">Loading reviews…</p></div>'+
+    '<div class="revform">'+
+      '<h3>Write a review</h3>'+
+      '<div class="revstars" id="revstars" role="radiogroup" aria-label="Rating">'+
+        '<button type="button" data-star="1" aria-label="1 star">☆</button>'+
+        '<button type="button" data-star="2" aria-label="2 stars">☆</button>'+
+        '<button type="button" data-star="3" aria-label="3 stars">☆</button>'+
+        '<button type="button" data-star="4" aria-label="4 stars">☆</button>'+
+        '<button type="button" data-star="5" aria-label="5 stars">☆</button>'+
+      '</div>'+
+      '<input id="revname" type="text" placeholder="Your name" maxlength="80">'+
+      '<input id="revtitle" type="text" placeholder="Title (optional)" maxlength="120">'+
+      '<textarea id="revbody" rows="3" placeholder="What did you think?" maxlength="2000"></textarea>'+
+      '<button type="button" class="btn" id="revsubmit">Submit review</button>'+
     '</div>'+
   '</section>';
 }
@@ -665,7 +767,7 @@ function pageCheckout(){
       '<div class="f"><label for="exp">Expiry</label><input id="exp" placeholder="MM / YY"><span class="err">Required</span></div>'+
       '<div class="f"><label for="cvc">Security code</label><input id="cvc" inputmode="numeric" placeholder="123"><span class="err">Required</span></div>'+
     '</div></fieldset>'+
-    '<button class="btn wide" type="submit">Place order &mdash; '+money(sub+ship)+'</button>'+
+    '<fieldset><legend>Promo &amp; gift card</legend><div class="fields">'+'<div class="f full"><label for="promo">Promo code</label><input id="promo" placeholder="Optional"></div>'+'<div class="f full"><label for="giftcard">Gift card</label><input id="giftcard" placeholder="Optional"></div>'+'</div></fieldset>'+'<button class="btn wide" type="submit">Place order &mdash; '+money(sub+ship)+'</button>'+
     '<p style="margin:18px 0 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dust);line-height:1.9">Demo only. No card is charged and nothing is sent.</p>'+
   '</form>'+
   '<aside class="summary"><h3>In your bag</h3>'+mini+
@@ -721,6 +823,19 @@ function route(){
     links[i].classList.toggle('on', links[i].getAttribute('href')===h);
   if(parts[0]==='product') wireProduct(parts[1]);
   if(parts[0]==='checkout') wireCheckout();
+  if(parts[0]==='shop') wireShop();
+}
+
+/* ---------- shop wiring (search + sort) ---------- */
+function renderShopGrid(){
+  var g=document.getElementById('shopgrid');
+  if(g) g.innerHTML = grid(filterSort(PRODUCTS));
+}
+function wireShop(){
+  var s=document.getElementById('shopsearch');
+  if(s) s.addEventListener('input', function(){ shopQuery=this.value; renderShopGrid(); });
+  var so=document.getElementById('shopsort');
+  if(so) so.addEventListener('change', function(){ shopSort=this.value; renderShopGrid(); });
 }
 
 /* ---------- page wiring ---------- */
@@ -730,16 +845,46 @@ function wireProduct(id){
   var addbtn=document.getElementById('addbtn');
   var msg=document.getElementById('stockmsg');
 
+  var notify=document.getElementById('notify');
   document.getElementById('sizes').addEventListener('click', function(e){
-    var b=e.target.closest('.sz'); if(!b||b.disabled) return;
+    var b=e.target.closest('.sz'); if(!b) return;
     var all=this.querySelectorAll('.sz');
     for(var i=0;i<all.length;i++) all[i].setAttribute('aria-pressed','false');
     b.setAttribute('aria-pressed','true');
     chosen=b.dataset.size;
     var left=p.sizes[chosen];
-    msg.textContent = left<=12 ? left+' left' : 'In stock';
-    addbtn.disabled=false; addbtn.textContent='Add to bag';
+    if(left>0){
+      msg.textContent = left<=12 ? left+' left' : 'In stock';
+      addbtn.disabled=false; addbtn.textContent='Add to bag';
+      if(notify) notify.innerHTML='';
+    } else {
+      msg.textContent='Sold out';
+      addbtn.disabled=true; addbtn.textContent='Sold out';
+      if(notify) notify.innerHTML=
+        '<div class="notify-box"><p>Size '+chosen+' is sold out. Get an email when it\'s back.</p>'+
+        '<div class="notify-row"><input id="notifyemail" type="email" placeholder="email address" aria-label="Email for restock alert">'+
+        '<button type="button" class="btn" id="notifybtn">Notify me</button></div></div>';
+    }
   });
+
+  if(notify) notify.addEventListener('click', function(e){
+    var b=e.target.closest('#notifybtn'); if(!b) return;
+    var em=document.getElementById('notifyemail');
+    var v=(em&&em.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){ toast('Enter a valid email'); return; }
+    b.disabled=true; b.textContent='Saving…';
+    fetch('/api/store/back-in-stock', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ slug:p.id, size:chosen, email:v })})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        if(res.ok){ notify.innerHTML='<div class="notify-box"><p>'+(res.j.message||'We\'ll email you when it\'s back.')+'</p></div>'; }
+        else { b.disabled=false; b.textContent='Notify me'; toast(res.j.error||'Could not save'); }
+      })
+      .catch(function(){ b.disabled=false; b.textContent='Notify me'; toast('Network error'); });
+  });
+
+  loadReviews(p.id);
+  wireReviewForm(p.id);
 
   document.querySelector('.qty').addEventListener('click', function(e){
     var b=e.target.closest('[data-q]'); if(!b) return;
@@ -760,6 +905,67 @@ function wireProduct(id){
     addToCart(p, chosen, qty);
     toast(p.name+' &mdash; size '+chosen+' added');
     document.getElementById('toast').textContent=p.name+' \u2014 size '+chosen+' added';
+  });
+}
+
+/* ---------- reviews ---------- */
+function loadReviews(slug){
+  var list=document.getElementById('revlist'); if(!list) return;
+  fetch('/api/store/reviews?slug='+encodeURIComponent(slug))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var rating=document.getElementById('pdprating');
+      if(rating){
+        if(d.count) rating.innerHTML='<span class="rev-stars">'+stars(d.average)+'</span> '+d.average.toFixed(1)+' ('+d.count+')';
+        else rating.innerHTML='<span class="muted">No reviews yet</span>';
+      }
+      if(!d.reviews || !d.reviews.length){ list.innerHTML='<p class="muted">Be the first to review this piece.</p>'; return; }
+      var h='';
+      for(var i=0;i<d.reviews.length;i++){
+        var rv=d.reviews[i];
+        h+='<div class="rev"><div class="rev-head"><span class="rev-stars">'+stars(rv.rating)+'</span>'+
+           '<span class="rev-name">'+esc(rv.authorName)+'</span></div>'+
+           (rv.title?'<div class="rev-title">'+esc(rv.title)+'</div>':'')+
+           '<p class="rev-body">'+esc(rv.body)+'</p></div>';
+      }
+      list.innerHTML=h;
+    })
+    .catch(function(){ list.innerHTML='<p class="muted">Could not load reviews.</p>'; });
+}
+function wireReviewForm(slug){
+  var wrap=document.getElementById('revstars'); if(!wrap) return;
+  var picked=0;
+  wrap.addEventListener('click', function(e){
+    var b=e.target.closest('[data-star]'); if(!b) return;
+    picked=parseInt(b.dataset.star,10);
+    var all=this.querySelectorAll('[data-star]');
+    for(var i=0;i<all.length;i++) all[i].textContent = (i<picked)?'★':'☆';
+  });
+  var sub=document.getElementById('revsubmit'); if(!sub) return;
+  sub.addEventListener('click', function(){
+    var name=(document.getElementById('revname').value||'').trim();
+    var title=(document.getElementById('revtitle').value||'').trim();
+    var body=(document.getElementById('revbody').value||'').trim();
+    if(!picked){ toast('Pick a star rating'); return; }
+    if(!name){ toast('Add your name'); return; }
+    if(!body){ toast('Write a short review'); return; }
+    sub.disabled=true; sub.textContent='Submitting…';
+    fetch('/api/store/reviews', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ slug:slug, rating:picked, authorName:name, title:title, body:body })})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        sub.disabled=false; sub.textContent='Submit review';
+        if(res.ok){
+          toast(res.j.message||'Thanks for your review');
+          document.getElementById('revname').value='';
+          document.getElementById('revtitle').value='';
+          document.getElementById('revbody').value='';
+          picked=0;
+          var all=wrap.querySelectorAll('[data-star]');
+          for(var i=0;i<all.length;i++) all[i].textContent='☆';
+        } else { toast(res.j.error||'Could not submit'); }
+      })
+      .catch(function(){ sub.disabled=false; sub.textContent='Submit review'; toast('Network error'); });
   });
 }
 
@@ -794,7 +1000,9 @@ function wireCheckout(){
       city: document.getElementById('city').value.trim(),
       zip: document.getElementById('zip').value.trim(),
       country: document.getElementById('country').value,
-      items: cart.map(function(c){ return { id:c.id, size:c.size, qty:c.qty }; })
+      items: cart.map(function(c){ return { id:c.id, size:c.size, qty:c.qty }; }),
+      couponCode: (document.getElementById('promo')||{}).value ? document.getElementById('promo').value.trim() : '',
+      giftCardCode: (document.getElementById('giftcard')||{}).value ? document.getElementById('giftcard').value.trim() : ''
     };
     var _btn = document.querySelector('#cof button[type=submit]');
     if(_btn){ _btn.disabled = true; _btn.textContent = 'Placing order\u2026'; }
@@ -832,6 +1040,17 @@ document.addEventListener('click', function(e){
   }
 });
 document.getElementById('bagbtn').addEventListener('click', function(){ location.hash='#/cart'; });
+document.addEventListener('blur', function(e){
+  var el = e.target;
+  if(!el || el.id!=='email') return;
+  var email = (el.value||'').trim();
+  if(!email || email.indexOf('@')<0 || !cart.length) return;
+  try{
+    fetch('/api/store/abandoned-cart', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ email: email, subtotal: subtotal(),
+        items: cart.map(function(c){return {id:c.id,name:c.name,size:c.size,qty:c.qty,price:c.price,image:c.img};}) })});
+  }catch(_){}
+}, true);
 window.addEventListener('hashchange', route);
 route();
 </script>

@@ -8,7 +8,14 @@ export async function GET() {
   if (!auth.ok) return auth.response;
 
   const products = await prisma.product.findMany({
-    select: { id: true, name: true, slug: true, images: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      images: true,
+      price: true,
+      variants: { select: { size: true }, where: { discontinued: false } },
+    },
     orderBy: { name: "asc" },
   });
 
@@ -19,6 +26,8 @@ export async function GET() {
         name: p.name,
         slug: p.slug,
         image: p.images?.[0] ?? null,
+        price: p.price,
+        sizes: [...new Set(p.variants.map((v) => v.size))],
       })),
     },
     { status: 200 },

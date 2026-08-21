@@ -91,6 +91,18 @@ export default async function AdminOrdersPage({
             <p className="text-[0.7rem] text-neutral-400">
               {totalCount} order{totalCount === 1 ? "" : "s"}
             </p>
+            <Link
+              href="/admin/orders/new"
+              className="rounded-md bg-white px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.16em] text-black hover:bg-neutral-200"
+            >
+              New order
+            </Link>
+            <a
+              href="/api/admin/orders/export"
+              className="rounded-md border border-neutral-700 px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.16em] text-neutral-200 hover:bg-neutral-900"
+            >
+              Export CSV
+            </a>
             <AdminPageHelp page="orders" />
           </div>
         </div>

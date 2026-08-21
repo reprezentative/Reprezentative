@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { sendEmail } from "@/lib/email";
+import { shippingEmail } from "@/lib/email-templates";
 
 export async function PUT(
   req: NextRequest,
@@ -30,6 +32,7 @@ export async function PUT(
     if (!existing) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
+    const firstShipment = !existing.shippedAt;
 
     const now = new Date();
 
@@ -49,6 +52,37 @@ export async function PUT(
             : existing.status,
       },
     });
+
+    // Notify the customer on first shipment (best-effort; dormant w/o email key).
+    if (firstShipment) {
+      try {
+        const full = await prisma.order.findUnique({
+          where: { id: params.id },
+          include: { user: { select: { email: true } } },
+        });
+        if (full?.user?.email) {
+          const mail = shippingEmail({
+            orderNumber: full.orderNumber,
+            total: full.total,
+            subtotal: full.subtotal,
+            shipping: full.shipping,
+            tax: full.tax,
+            discount: full.discount,
+            items: [],
+            trackingNumber: full.trackingNumber,
+            carrier: full.carrier,
+          });
+          await sendEmail({
+            to: full.user.email,
+            subject: mail.subject,
+            html: mail.html,
+            template: "shipping",
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
 
     return NextResponse.json(order);
   } catch (error) {

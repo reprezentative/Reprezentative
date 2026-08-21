@@ -19,7 +19,20 @@ declare module "@/components/AdminPageHelp" {
     | "ai-assistant"
     | "settings"
     | "api-keys"
-    | "media";
+    | "media"
+    | "collections"
+    | "size-charts"
+    | "discounts"
+    | "abandoned-carts"
+    | "returns"
+    | "reviews"
+    | "back-in-stock"
+    | "security"
+    | "staff"
+    | "audit-log"
+    | "low-stock"
+    | "tax"
+    | "reports";
 
   export function AdminPageHelp(props: { page: AdminHelpKey }): JSX.Element;
 }

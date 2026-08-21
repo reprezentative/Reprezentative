@@ -20,6 +20,11 @@ model User {
   password  String
   role      UserRole @default(CUSTOMER)
 
+  // Staff access control + 2FA
+  permissions      String[] @default([])
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?
+
   // Profile
   name      String?
   phone     String?
@@ -53,6 +58,7 @@ model User {
 
 enum UserRole {
   CUSTOMER
+  STAFF
   ADMIN
 }
 
@@ -106,6 +112,8 @@ model Product {
   orderItems      OrderItem[]
   supplierProducts SupplierProduct[]
   wishlistItems   WishlistItem[]
+  collections     Collection[]     @relation("ProductCollections")
+  reviews         Review[]
   // Other relations (orderItems, wishlist, reviews, etc.) will be added later
 
   @@index([slug])
@@ -159,6 +167,7 @@ model ProductVariant {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   stockHistory StockHistory[]
   purchaseOrderItems PurchaseOrderItem[]
+  backInStockRequests BackInStockRequest[]
 
   @@unique([productId, color, size])
   @@index([productId])
@@ -320,11 +329,19 @@ model Order {
   shippedAt        DateTime?
   deliveredAt      DateTime?
 
+  // Payments / order meta
+  stripePaymentIntentId String?
+  couponCode            String?
+  notes                 String?
+  tags                  String[]  @default([])
+  isDraft               Boolean   @default(false)
+
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
   user  User       @relation("UserOrders", fields: [userId], references: [id])
   items OrderItem[]
+  returns Return[]
 
   @@index([userId])
   @@index([status])
@@ -660,6 +677,199 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// ============================================
+// COLLECTIONS
+// ============================================
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products    Product[] @relation("ProductCollections")
+
+  @@index([slug])
+  @@map("collections")
+}
+
+// ============================================
+// REVIEWS
+// ============================================
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Review {
+  id         String       @id @default(cuid())
+  productId  String
+  userId     String?
+  authorName String
+  rating     Int
+  title      String?
+  body       String       @db.Text
+  status     ReviewStatus @default(PENDING)
+
+  createdAt  DateTime     @default(now())
+
+  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, status])
+  @@map("reviews")
+}
+
+// ============================================
+// DISCOUNTS / GIFT CARDS
+// ============================================
+
+enum CouponType {
+  PERCENT
+  FIXED
+  FREE_SHIPPING
+}
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType
+  value          Float      @default(0)
+  active         Boolean    @default(true)
+  minSubtotal    Float?
+  maxRedemptions Int?
+  timesUsed      Int        @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime?
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([code])
+  @@map("coupons")
+}
+
+model GiftCard {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  initialBalance Float
+  balance        Float
+  active         Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("gift_cards")
+}
+
+// ============================================
+// RETURNS / RMA
+// ============================================
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUNDED
+}
+
+model Return {
+  id           String       @id @default(cuid())
+  orderId      String
+  status       ReturnStatus @default(REQUESTED)
+  reason       String?
+  items        Json         // [{ orderItemId, quantity }]
+  refundAmount Float?
+  restock      Boolean      @default(true)
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("returns")
+}
+
+// ============================================
+// BACK-IN-STOCK REQUESTS
+// ============================================
+
+model BackInStockRequest {
+  id        String   @id @default(cuid())
+  variantId String
+  email     String
+  notified  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId, notified])
+  @@map("back_in_stock_requests")
+}
+
+// ============================================
+// ABANDONED CARTS + EMAIL LOG
+// ============================================
+
+model AbandonedCart {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  items     Json     // [{ id, name, size, qty, price, image }]
+  subtotal  Float    @default(0)
+  recovered Boolean  @default(false)
+  remindedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recovered, updatedAt])
+  @@map("abandoned_carts")
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  template  String?
+  status    String   // "SENT", "SKIPPED", "FAILED"
+  error     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userEmail String?
+  action    String   // "product.update", "order.refund", etc.
+  entity    String?  // "Product", "Order"
+  entityId  String?
+  meta      Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@map("audit_logs")
 }
 
 

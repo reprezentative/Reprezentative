@@ -37,6 +37,23 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Aggregate approved review ratings per product for storefront display.
+  const ratingRows = await prisma.review.groupBy({
+    by: ["productId"],
+    where: { status: "APPROVED" },
+    _avg: { rating: true },
+    _count: { rating: true },
+  });
+  const ratingByProduct = new Map(
+    ratingRows.map((r) => [
+      r.productId,
+      {
+        avg: Math.round((r._avg.rating ?? 0) * 10) / 10,
+        count: r._count.rating,
+      },
+    ]),
+  );
+
   const mapped = products.map((p) => {
     // Sum available stock per size across variants (color-agnostic storefront).
     const sizes: Record<string, number> = {};
@@ -46,6 +63,7 @@ export async function GET() {
     }
     const img = p.images?.[0] || PLACEHOLDER;
     const detail = p.images?.[1] || p.images?.[0] || PLACEHOLDER;
+    const rating = ratingByProduct.get(p.id) ?? { avg: 0, count: 0 };
     return {
       id: p.slug,
       name: p.name,
@@ -58,6 +76,8 @@ export async function GET() {
         (p.description ? p.description.slice(0, 140) : ""),
       story: p.description || "",
       sizes: orderSizes(sizes),
+      rating: rating.avg,
+      reviewCount: rating.count,
     };
   });
 

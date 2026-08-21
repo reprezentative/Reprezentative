@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { evaluateCoupon, evaluateGiftCard } from "@/lib/discounts";
+import { getTaxRate } from "@/lib/tax";
+import { isStripeConfigured, createPaymentIntent } from "@/lib/payments";
+import { sendEmail } from "@/lib/email";
+import { orderConfirmationEmail } from "@/lib/email-templates";
 
 export const runtime = "nodejs";
 
@@ -22,6 +27,8 @@ export async function POST(req: NextRequest) {
       zip,
       country,
       items,
+      couponCode,
+      giftCardCode,
     } = body as {
       email?: string;
       firstName?: string;
@@ -31,6 +38,8 @@ export async function POST(req: NextRequest) {
       zip?: string;
       country?: string;
       items?: IncomingItem[];
+      couponCode?: string;
+      giftCardCode?: string;
     };
 
     const cleanEmail = (email ?? "").trim().toLowerCase();
@@ -125,8 +134,35 @@ export async function POST(req: NextRequest) {
     }
 
     const subtotal = plan.reduce((sum, l) => sum + l.price * l.qty, 0);
-    const shipping = subtotal >= 150 || subtotal === 0 ? 0 : 8;
-    const total = subtotal + shipping;
+
+    // Promo code
+    const couponEval = await evaluateCoupon(couponCode, subtotal);
+    if (couponCode && !couponEval.ok) {
+      return NextResponse.json({ error: couponEval.error ?? "Invalid code" }, { status: 400 });
+    }
+    const couponDiscount = couponEval.ok ? couponEval.discount : 0;
+
+    const shipping =
+      couponEval.freeShipping || subtotal >= 150 || subtotal === 0 ? 0 : 8;
+
+    // Configurable tax (Phase 6 settings); applied to discounted subtotal.
+    const taxRate = await getTaxRate();
+    const taxable = Math.max(0, subtotal - couponDiscount);
+    const tax = Math.round(taxable * taxRate * 100) / 100;
+
+    const preGiftTotal = Math.max(0, taxable + shipping + tax);
+
+    // Gift card (draws down balance).
+    const giftEval = await evaluateGiftCard(giftCardCode);
+    if (giftCardCode && !giftEval.ok) {
+      return NextResponse.json({ error: giftEval.error ?? "Invalid gift card" }, { status: 400 });
+    }
+    const giftApplied = giftEval.ok
+      ? Math.min(giftEval.balance, preGiftTotal)
+      : 0;
+
+    const discount = Math.round((couponDiscount + giftApplied) * 100) / 100;
+    const total = Math.max(0, Math.round((preGiftTotal - giftApplied) * 100) / 100);
 
     // Guest checkout: reuse an existing account by email or create one.
     let user = await prisma.user.findUnique({ where: { email: cleanEmail } });
@@ -146,6 +182,14 @@ export async function POST(req: NextRequest) {
     }
     const userId = user.id;
 
+    // Create a payment intent when Stripe is configured (dormant until keys
+    // are added — the order is still recorded either way).
+    let stripePaymentIntentId: string | null = null;
+    if (isStripeConfigured() && total > 0) {
+      const pi = await createPaymentIntent(total, { email: cleanEmail });
+      stripePaymentIntentId = pi?.id ?? null;
+    }
+
     // Create the order, line items, and decrement stock atomically. Retry once
     // if the random order number happens to collide.
     let created: { orderNumber: string } | null = null;
@@ -160,11 +204,27 @@ export async function POST(req: NextRequest) {
               status: "PENDING",
               subtotal,
               shipping,
-              tax: 0,
-              discount: 0,
+              tax,
+              discount,
               total,
+              couponCode: couponEval.ok ? couponEval.code : null,
+              stripePaymentIntentId,
             },
           });
+
+          // Record coupon usage + draw down gift card balance.
+          if (couponEval.ok && couponEval.code) {
+            await tx.coupon.update({
+              where: { code: couponEval.code },
+              data: { timesUsed: { increment: 1 } },
+            });
+          }
+          if (giftEval.ok && giftEval.code && giftApplied > 0) {
+            await tx.giftCard.update({
+              where: { code: giftEval.code },
+              data: { balance: { decrement: giftApplied } },
+            });
+          }
 
           for (const l of plan) {
             await tx.orderItem.create({
@@ -250,6 +310,37 @@ export async function POST(req: NextRequest) {
         { error: "Could not place the order. Please try again." },
         { status: 500 },
       );
+    }
+
+    // Post-order side effects (best-effort — never block the response).
+    try {
+      const confirmation = orderConfirmationEmail({
+        orderNumber: created.orderNumber,
+        subtotal,
+        shipping,
+        tax,
+        discount,
+        total,
+        items: plan.map((l) => ({
+          name: l.product.name,
+          size: l.size,
+          quantity: l.qty,
+          price: l.price,
+        })),
+      });
+      await sendEmail({
+        to: cleanEmail,
+        subject: confirmation.subject,
+        html: confirmation.html,
+        template: "order_confirmation",
+      });
+      // Mark any abandoned cart for this email as recovered.
+      await prisma.abandonedCart.updateMany({
+        where: { email: cleanEmail, recovered: false },
+        data: { recovered: true },
+      });
+    } catch {
+      /* ignore */
     }
 
     return NextResponse.json(

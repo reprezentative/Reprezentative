@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { refundPayment } from "@/lib/payments";
+import { logAudit } from "@/lib/audit";
 
 const VALID_STATUSES = [
   "PENDING",
@@ -48,6 +50,19 @@ export async function PATCH(
 
     const nowClosing = CLOSED.has(status) && !CLOSED.has(order.status);
 
+    // Issue a Stripe refund when refunding (no-op if Stripe/intent absent).
+    let refunded = false;
+    if (status === "REFUNDED" && order.stripePaymentIntentId) {
+      const r = await refundPayment(order.stripePaymentIntentId, order.total);
+      refunded = r.refunded;
+      if (!r.ok) {
+        return NextResponse.json(
+          { error: `Stripe refund failed: ${r.error}` },
+          { status: 502 },
+        );
+      }
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id: params.id },
@@ -92,11 +107,27 @@ export async function PATCH(
       }
     });
 
+    await logAudit({
+      action: "order.status_change",
+      entity: "Order",
+      entityId: order.id,
+      userId: auth.userId,
+      userEmail: auth.email,
+      meta: {
+        orderNumber: order.orderNumber,
+        from: order.status,
+        to: status,
+        restocked: nowClosing,
+        refunded,
+      },
+    });
+
     return NextResponse.json(
       {
         id: order.id,
         status,
         restocked: nowClosing,
+        refunded,
       },
       { status: 200 },
     );

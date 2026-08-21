@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { UpdateTrackingForm } from "@/app/admin/operations/logistics/UpdateTrackingForm";
 import { OrderStatusForm } from "./OrderStatusForm";
+import { ReturnForm } from "./ReturnForm";
 import { carrierTrackingUrl } from "@/lib/tracking";
 
 type PageProps = {
@@ -22,6 +23,9 @@ async function getOrder(id: string) {
             select: { slug: true },
           },
         },
+      },
+      returns: {
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -77,6 +81,13 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
               Subtotal ${order.subtotal.toFixed(2)} • Shipping $
               {order.shipping.toFixed(2)} • Tax ${order.tax.toFixed(2)}
             </p>
+            <Link
+              href={`/admin/orders/${order.id}/print`}
+              target="_blank"
+              className="mt-2 inline-block rounded border border-neutral-700 px-3 py-1 text-[0.65rem] uppercase tracking-[0.16em] text-neutral-200 hover:bg-neutral-800"
+            >
+              Print packing slip
+            </Link>
           </div>
         </div>
       </div>
@@ -147,6 +158,57 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
               status={order.status}
               orderNumber={order.orderNumber}
             />
+          </div>
+
+          {/* Returns / RMA */}
+          <div className="rounded-md border border-neutral-800 bg-zinc-950/60 p-4">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-neutral-300">
+              Returns &amp; Refunds
+            </p>
+            {order.returns.length > 0 && (
+              <div className="mt-3 space-y-2 text-[0.7rem]">
+                {order.returns.map((r) => {
+                  const rItems = Array.isArray(r.items)
+                    ? (r.items as any[])
+                    : [];
+                  const units = rItems.reduce(
+                    (s, x) => s + (Number(x.quantity) || 0),
+                    0,
+                  );
+                  return (
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between gap-3 rounded border border-neutral-800 bg-black/40 px-3 py-2"
+                    >
+                      <span className="text-neutral-300">
+                        {units} unit{units === 1 ? "" : "s"}
+                        {r.refundAmount
+                          ? ` • $${r.refundAmount.toFixed(2)} refund`
+                          : ""}
+                        {r.reason ? ` • ${r.reason}` : ""}
+                      </span>
+                      <span className="rounded bg-neutral-800 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.14em] text-neutral-200">
+                        {r.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="mt-3">
+              <ReturnForm
+                orderId={order.id}
+                hasPaymentIntent={!!order.stripePaymentIntentId}
+                items={order.items.map((i) => ({
+                  id: i.id,
+                  name: i.name,
+                  size: i.size,
+                  color: i.color,
+                  quantity: i.quantity,
+                  price: i.price,
+                }))}
+              />
+            </div>
           </div>
         </div>
 

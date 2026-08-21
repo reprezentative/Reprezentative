@@ -78,10 +78,40 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                     Inventory Manager
                   </Link>
                   <Link
+                    href="/admin/back-in-stock"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Back-in-stock
+                  </Link>
+                  <Link
+                    href="/admin/low-stock"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Low-stock Alerts
+                  </Link>
+                  <Link
                     href="/admin/media"
                     className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
                   >
                     Media Library
+                  </Link>
+                  <Link
+                    href="/admin/collections"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Collections
+                  </Link>
+                  <Link
+                    href="/admin/products/import"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Bulk Import
+                  </Link>
+                  <Link
+                    href="/admin/size-charts"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Size Charts
                   </Link>
                 </div>
               </div>
@@ -99,6 +129,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                     <span>Orders</span>
                   </Link>
                   <Link
+                    href="/admin/returns"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Returns
+                  </Link>
+                  <Link
+                    href="/admin/reviews"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Reviews
+                  </Link>
+                  <Link
                     href="/admin/customers"
                     className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
                   >
@@ -111,10 +153,28 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                     Analytics
                   </Link>
                   <Link
+                    href="/admin/reports"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Reports
+                  </Link>
+                  <Link
                     href="/admin/marketing"
                     className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
                   >
                     Marketing
+                  </Link>
+                  <Link
+                    href="/admin/discounts"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Discounts
+                  </Link>
+                  <Link
+                    href="/admin/abandoned-carts"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Abandoned Carts
                   </Link>
                 </div>
               </div>
@@ -210,6 +270,30 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   Settings
                 </div>
                 <div className="space-y-1">
+                  <Link
+                    href="/admin/staff"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Staff &amp; Permissions
+                  </Link>
+                  <Link
+                    href="/admin/security"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Security (2FA)
+                  </Link>
+                  <Link
+                    href="/admin/tax"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Tax
+                  </Link>
+                  <Link
+                    href="/admin/audit-log"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Audit Log
+                  </Link>
                   <Link
                     href="/admin/settings/api-keys"
                     className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
