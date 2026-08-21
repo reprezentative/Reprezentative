@@ -11,6 +11,7 @@ export default async function AdminInventoryPage() {
           name: true,
           sku: true,
           category: true,
+          images: true,
         },
       },
     },

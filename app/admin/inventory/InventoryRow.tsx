@@ -15,6 +15,7 @@ type VariantWithProduct = {
     name: string;
     sku: string;
     category: string;
+    images: string[];
   };
 };
 
@@ -89,13 +90,27 @@ export function InventoryRow({ variant }: Props) {
   return (
     <tr className="border-t border-neutral-900 hover:bg-neutral-900/40">
       <td className="px-3 py-2 align-top">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-medium text-white">
-            {variant.product.name}
-          </span>
-          <span className="text-[0.7rem] text-neutral-500">
-            {variant.product.sku} • {variant.product.category}
-          </span>
+        <div className="flex items-center gap-3">
+          {variant.product.images?.[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={variant.product.images[0]}
+              alt={variant.product.name}
+              className="h-10 w-10 flex-shrink-0 rounded object-cover ring-1 ring-neutral-800"
+            />
+          ) : (
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-neutral-900 text-[0.55rem] text-neutral-600 ring-1 ring-neutral-800">
+              No img
+            </div>
+          )}
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium text-white">
+              {variant.product.name}
+            </span>
+            <span className="text-[0.7rem] text-neutral-500">
+              {variant.product.sku} • {variant.product.category}
+            </span>
+          </div>
         </div>
       </td>
       <td className="px-3 py-2 align-top">
