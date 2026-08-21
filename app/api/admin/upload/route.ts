@@ -21,8 +21,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let form: FormData;
   try {
-    const form = await req.formData();
+    form = await req.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid upload — expected multipart form data with a file." },
+      { status: 400 },
+    );
+  }
+
+  try {
     const file = form.get("file");
 
     if (!(file instanceof File)) {

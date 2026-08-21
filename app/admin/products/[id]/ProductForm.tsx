@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MediaPicker } from "@/components/MediaPicker";
 
 export type AdminProductFormValues = {
   name: string;
@@ -46,8 +47,6 @@ export function ProductForm({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
 
   const {
@@ -113,23 +112,6 @@ export function ProductForm({
     }
   };
 
-  const handleImageUpload = async (file: File) => {
-    setUploadError(null);
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Upload failed");
-      setValue("imageUrl", body.url, { shouldDirty: true });
-    } catch (err: any) {
-      setUploadError(err.message || "Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const currentImage = watch("imageUrl");
 
   return (
@@ -186,20 +168,12 @@ export function ProductForm({
               {...register("imageUrl")}
             />
             <div className="mt-2 flex items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center rounded-md border border-neutral-700 px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.16em] text-neutral-200 hover:bg-neutral-900">
-                {uploading ? "Uploading…" : "Upload image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={uploading}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleImageUpload(f);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
+              <MediaPicker
+                onSelect={(url) =>
+                  setValue("imageUrl", url, { shouldDirty: true })
+                }
+                label="Upload image"
+              />
               {currentImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -209,12 +183,8 @@ export function ProductForm({
                 />
               ) : null}
             </div>
-            {uploadError && (
-              <p className="mt-1 text-[0.7rem] text-red-400">{uploadError}</p>
-            )}
             <p className="mt-1 text-[0.65rem] text-neutral-500">
-              Upload an image (max 5 MB) or paste a URL. Optional — can be added
-              later.
+              Upload, choose from the Media Library, or paste a URL. Optional.
             </p>
           </div>
 

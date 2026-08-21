@@ -115,14 +115,16 @@ export default async function AdminDashboardPage() {
         createdAt: { gte: last30Days, lte: now },
       },
     }),
-    prisma.user.count(),
+    prisma.user.count({ where: { role: "CUSTOMER" } }),
     prisma.user.count({
       where: {
+        role: "CUSTOMER",
         createdAt: { gte: last7Days, lte: now },
       },
     }),
     prisma.user.count({
       where: {
+        role: "CUSTOMER",
         createdAt: { gte: last30Days, lte: now },
       },
     }),

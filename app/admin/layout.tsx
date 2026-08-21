@@ -77,6 +77,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                   >
                     Inventory Manager
                   </Link>
+                  <Link
+                    href="/admin/media"
+                    className="block rounded-md px-2.5 py-2 hover:bg-neutral-800"
+                  >
+                    Media Library
+                  </Link>
                 </div>
               </div>
 

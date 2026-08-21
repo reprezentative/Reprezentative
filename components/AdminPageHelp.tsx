@@ -21,7 +21,8 @@ export type AdminHelpKey =
   | "seo"
   | "ai-assistant"
   | "settings"
-  | "api-keys";
+  | "api-keys"
+  | "media";
 
 type HelpCopy = {
   title: string;
@@ -253,6 +254,20 @@ const HELP_CONTENT: Record<AdminHelpKey, HelpCopy> = {
     ],
     caveats: [
       "Settings changes take effect immediately across the app; use caution in production environments.",
+    ],
+  },
+  media: {
+    title: "Media Library",
+    summary:
+      "Upload and manage images once, then reuse them anywhere — product images, homepage content sections, and more.",
+    bullets: [
+      "Click “Upload images” to add one or many images (max 5 MB each).",
+      "Use “Copy URL” to grab a public link, or delete images you no longer need.",
+      "In product and content forms, use the image picker to choose from this library or upload on the spot.",
+    ],
+    caveats: [
+      "Images are stored in Supabase Storage and served via public URLs.",
+      "Deleting an image here does not automatically remove it from products/content already using its URL.",
     ],
   },
   "api-keys": {

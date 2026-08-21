@@ -18,7 +18,8 @@ declare module "@/components/AdminPageHelp" {
     | "seo"
     | "ai-assistant"
     | "settings"
-    | "api-keys";
+    | "api-keys"
+    | "media";
 
   export function AdminPageHelp(props: { page: AdminHelpKey }): JSX.Element;
 }
