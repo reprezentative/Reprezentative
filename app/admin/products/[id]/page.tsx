@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ProductForm, type AdminProductInitial } from "./ProductForm";
+import { VariantManager } from "./VariantManager";
 
 export default async function AdminProductEditPage({
   params,
@@ -11,6 +12,9 @@ export default async function AdminProductEditPage({
 
   const product = await prisma.product.findUnique({
     where: { id },
+    include: {
+      variants: { orderBy: [{ color: "asc" }, { size: "asc" }] },
+    },
   });
 
   if (!product) {
@@ -34,6 +38,17 @@ export default async function AdminProductEditPage({
   return (
     <main className="min-h-screen bg-black px-6 py-6 text-white">
       <ProductForm product={initial} />
+      <VariantManager
+        productId={product.id}
+        initialVariants={product.variants.map((v) => ({
+          id: v.id,
+          color: v.color,
+          colorHex: v.colorHex,
+          size: v.size,
+          stock: v.stock,
+          available: v.available,
+        }))}
+      />
     </main>
   );
 }
