@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 
+// Lightweight product list for pickers (e.g. assigning a media image).
+export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
+  const products = await prisma.product.findMany({
+    select: { id: true, name: true, slug: true, images: true },
+    orderBy: { name: "asc" },
+  });
+
+  return NextResponse.json(
+    {
+      products: products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        image: p.images?.[0] ?? null,
+      })),
+    },
+    { status: 200 },
+  );
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
   if (!auth.ok) return auth.response;

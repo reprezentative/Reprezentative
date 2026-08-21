@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminPageHelp } from "@/components/AdminPageHelp";
+
+type ProductOption = { id: string; name: string; slug: string; image: string | null };
 
 type LibImage = {
   path: string;
@@ -29,6 +32,52 @@ export default function MediaLibraryPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+
+  // "Use in product" assignment modal state
+  const router = useRouter();
+  const [assignImg, setAssignImg] = useState<LibImage | null>(null);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+  const [assigningTo, setAssigningTo] = useState<string | null>(null);
+
+  const openAssign = async (img: LibImage) => {
+    setAssignImg(img);
+    setProductSearch("");
+    setLoadingProducts(true);
+    try {
+      const res = await fetch("/api/admin/products");
+      const body = await res.json().catch(() => ({}));
+      setProducts(body.products ?? []);
+    } catch {
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const assignTo = async (product: ProductOption) => {
+    if (!assignImg) return;
+    setAssigningTo(product.id);
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}/image`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: assignImg.url, mode: "primary" }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        setStatus(b.error ?? "Failed to assign image.");
+        return;
+      }
+      setStatus(`Set as the primary image for "${product.name}".`);
+      setAssignImg(null);
+    } catch {
+      setStatus("Failed to assign image.");
+    } finally {
+      setAssigningTo(null);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -241,6 +290,13 @@ export default function MediaLibraryPage() {
                     <p className="text-[0.65rem] text-neutral-500">
                       {formatSize(img.size)}
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => openAssign(img)}
+                      className="w-full rounded-md bg-white px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-black hover:bg-neutral-200"
+                    >
+                      Use in product
+                    </button>
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
@@ -264,6 +320,106 @@ export default function MediaLibraryPage() {
           </>
         )}
       </section>
+
+      {assignImg && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setAssignImg(null)}
+        >
+          <div
+            className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg border border-neutral-800 bg-zinc-950 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white">
+                Use image in a product
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAssignImg(null)}
+                className="text-xs text-neutral-400 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mb-4 flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={assignImg.url}
+                alt=""
+                className="h-14 w-14 rounded object-cover ring-1 ring-neutral-800"
+              />
+              <p className="text-[0.7rem] text-neutral-400">
+                This becomes the product&apos;s primary image — the one shown on
+                the store.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/admin/products/new?image=${encodeURIComponent(assignImg.url)}`,
+                )
+              }
+              className="mb-4 w-full rounded-md border border-emerald-700 bg-emerald-950/30 px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-emerald-300 hover:bg-emerald-950/60"
+            >
+              + Create new product with this image
+            </button>
+
+            <p className="mb-2 text-[0.65rem] uppercase tracking-[0.16em] text-neutral-500">
+              …or add it to an existing product
+            </p>
+            <input
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search products…"
+              className="mb-3 h-9 w-full rounded-md border border-neutral-800 bg-black px-3 text-xs text-white outline-none focus:border-neutral-500"
+            />
+            {loadingProducts ? (
+              <p className="py-6 text-center text-xs text-neutral-500">Loading…</p>
+            ) : products.length === 0 ? (
+              <p className="py-6 text-center text-xs text-neutral-500">
+                No products yet — use “Create new product” above.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {products
+                  .filter((p) =>
+                    p.name.toLowerCase().includes(productSearch.toLowerCase()),
+                  )
+                  .map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => assignTo(p)}
+                      disabled={assigningTo === p.id}
+                      className="flex w-full items-center gap-3 rounded-md border border-neutral-800 px-3 py-2 text-left hover:bg-neutral-900 disabled:opacity-50"
+                    >
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.image}
+                          alt=""
+                          className="h-8 w-8 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-neutral-800" />
+                      )}
+                      <span className="flex-1 text-xs text-neutral-200">
+                        {p.name}
+                      </span>
+                      <span className="text-[0.6rem] uppercase tracking-[0.14em] text-neutral-500">
+                        {assigningTo === p.id ? "Saving…" : "Select"}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

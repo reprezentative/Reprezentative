@@ -1,6 +1,10 @@
 import { ProductForm, type AdminProductInitial } from "../[id]/ProductForm";
 
-export default function AdminProductCreatePage() {
+export default function AdminProductCreatePage({
+  searchParams,
+}: {
+  searchParams: { image?: string };
+}) {
   const initial: AdminProductInitial = {
     name: "",
     slug: "",
@@ -8,7 +12,7 @@ export default function AdminProductCreatePage() {
     price: 0,
     sku: "",
     category: "",
-    imageUrl: "",
+    imageUrl: searchParams?.image ?? "",
     featured: false,
     isNew: true,
     inStock: true,
